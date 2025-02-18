@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Julian Date And Batch Code Display</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #007bff;
+        }
+        .table {
+            background-color: white;
+        }
+        .table th, .table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .table thead th {
+            background-color: #007bff;
+            color: white;
+        }
+        @media (max-width: 767.98px) {
+            .table-responsive {
+                overflow-x: auto;
+            }
+            .table {
+                width: 100%;
+                margin-bottom: 15px;
+                background-color: white;
+            }
+        }
+    </style>
+    <script>
+    //*** KHU VỰC HÀM JULIAN DATE
+        // HÀM JuLianDate của Line Sanko 12
+        function julianDate(year, month, day) {
+            const date = new Date(year, month - 1, day);
+            const startOfYear = new Date(year, 0, 0);
+            const diff = date - startOfYear;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const julianDay = Math.floor(diff / oneDay);
+            return julianDay;
+        }
+        // HÀM JulianDate của Line Sanko 14
+        function julianDate12(year, month, day) {
+            const date = new Date(year, month - 1, day);
+            const startOfYear = new Date(year, 0, 0);
+            const diff = date - startOfYear;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const julianDay = Math.floor(diff / oneDay);
+            return julianDay;
+        }
+        // HÀM JulianDate của Line Sanko 711
+        function julianDate711(year, month, day) {
+            const date = new Date(year, month - 1, day);
+            const startOfYear = new Date(year, 0, 0);
+            const diff = date - startOfYear;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const julianDay = Math.floor(diff / oneDay);
+            return julianDay;
+        }
+        // HÀM JulianDate của Line Topack 34
+        function julianDate34(year, month, day) {
+            const date = new Date(year, month - 1, day);
+            const startOfYear = new Date(year, 0, 0);
+            const diff = date - startOfYear;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const julianDay = Math.floor(diff / oneDay);
+            return julianDay;
+        }
+         // HÀM JulianDate của Line Sanko 48
+         function julianDate48(year, month, day) {
+            const date = new Date(year, month - 1, day);
+            const startOfYear = new Date(year, 0, 0);
+            const diff = date - startOfYear;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const julianDay = Math.floor(diff / oneDay);
+            return julianDay;
+        }
+          // HÀM JulianDate của Line Sanko 26
+          function julianDate26(year, month, day) {
+            const date = new Date(year, month - 1, day);
+            const startOfYear = new Date(year, 0, 0);
+            const diff = date - startOfYear;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const julianDay = Math.floor(diff / oneDay);
+            return julianDay;
+        }
+          // HÀM JulianDate của Line Mespack 12
+          function julianDateMes12(year, month, day) {
+            const date = new Date(year, month - 1, day);
+            const startOfYear = new Date(year, 0, 0);
+            const diff = date - startOfYear;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const julianDay = Math.floor(diff / oneDay);
+            return julianDay;
+        }
+          // HÀM JulianDate của Line Mespack 3
+          function julianDateMes3(year, month, day) {
+            const date = new Date(year, month - 1, day);
+            const startOfYear = new Date(year, 0, 0);
+            const diff = date - startOfYear;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const julianDay = Math.floor(diff / oneDay);
+            return julianDay;
+        }
+
+        // -----------------------------------------------------------------------------------------------------------
+    //*** KHU VỰC FORMAT BATCH CODE
+        // Hàm Format JulianDate Sanko 14
+        function formatJulianDate(year, month, day, identifier = 'X') {
+            const julianDay = julianDate(year, month, day).toString().padStart(3, '0');
+            const formattedDate = `5${identifier}2131X`;
+            return formattedDate.replace(identifier, julianDay);
+        }
+        // Hàm Format JulianDate Sanko 12
+        function formatJulianDate12(year, month, day, identifier = 'X') {
+            const julianDay = julianDate(year, month, day).toString().padStart(3, '0');
+            const formattedDate = `5${identifier}2131U`;
+            return formattedDate.replace(identifier, julianDay);
+        }
+        // Hàm Format JulianDate Sanko 711
+        function formatJulianDate711(year, month, day, identifier = 'X') {
+            const julianDay = julianDate(year, month, day).toString().padStart(3, '0');
+            const formattedDate = `5${identifier}2131A`;
+            return formattedDate.replace(identifier, julianDay);
+        }
+        // Hàm Format JulianDate Topack 34
+        function formatJulianDate34(year, month, day, identifier = 'X') {
+            const julianDay = julianDate(year, month, day).toString().padStart(3, '0');
+            const formattedDate = `5${identifier}2131V`;
+            return formattedDate.replace(identifier, julianDay);
+        }
+        // Hàm Format JulianDate Sanko 48
+        function formatJulianDate48(year, month, day, identifier = 'X') {
+            const julianDay = julianDate(year, month, day).toString().padStart(3, '0');
+            const formattedDate = `5${identifier}2131B`;
+            return formattedDate.replace(identifier, julianDay);
+        }
+         // Hàm Format JulianDate Sanko 26
+         function formatJulianDate26(year, month, day, identifier = 'X') {
+            const julianDay = julianDate(year, month, day).toString().padStart(3, '0');
+            const formattedDate = `5${identifier}2131L`;
+            return formattedDate.replace(identifier, julianDay);
+        }
+         // Hàm Format JulianDate Mespack 12
+         function formatJulianDateMes12(year, month, day, identifier = 'X') {
+            const julianDay = julianDate(year, month, day).toString().padStart(3, '0');
+            const formattedDate = `5${identifier}2131J`;
+            return formattedDate.replace(identifier, julianDay);
+        }
+         // Hàm Format JulianDate Mespack 3
+         function formatJulianDateMes3(year, month, day, identifier = 'X') {
+            const julianDay = julianDate(year, month, day).toString().padStart(3, '0');
+            const formattedDate = `5${identifier}2131N`;
+            return formattedDate.replace(identifier, julianDay);
+        }
+
+    //----------------------------------------------------------------------------------------------------
+    // KHU VỰC UPDATE LỊCH JULIAN
+        // Hàm update Julian Sanko 14
+        function updateJulianDate() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth() + 1;
+            const day = today.getDate();
+            return formatJulianDate(year, month, day);
+        }
+        // Hàm update Julian Sanko 12
+        function updateJulianDate12() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth() + 1;
+            const day = today.getDate();
+            return formatJulianDate12(year, month, day);
+        }
+        // Hàm update Julian Sanko 711
+        function updateJulianDate711() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth() + 1;
+            const day = today.getDate();
+            return formatJulianDate711(year, month, day);
+        }
+        // Hàm update Julian Topack 34
+        function updateJulianDate34() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth() + 1;
+            const day = today.getDate();
+            return formatJulianDate34(year, month, day);
+        }
+        // Hàm update Julian Sanko 48
+        function updateJulianDate48() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth() + 1;
+            const day = today.getDate();
+            return formatJulianDate48(year, month, day);
+        }
+          // Hàm update Julian Sanko 26
+          function updateJulianDate26() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth() + 1;
+            const day = today.getDate();
+            return formatJulianDate26(year, month, day);
+        }
+          // Hàm update Julian Mespack 12
+          function updateJulianDateMes12() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth() + 1;
+            const day = today.getDate();
+            return formatJulianDateMes12(year, month, day);
+        }
+           // Hàm update Julian Mespack 3
+           function updateJulianDateMes3() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth() + 1;
+            const day = today.getDate();
+            return formatJulianDateMes3(year, month, day);
+        }
+
+    //----------------------------------------------------------------------------------------------------
+    //*** CACULATION NGÀY HẾT HẠN
+        // CACULATION NGÀY HẾT HẠN CỦA SANKO 14 - CFSD
+        function calculateExpirationDate() {
+            const today = new Date();
+            const expirationDate = new Date(today);
+            expirationDate.setFullYear(today.getFullYear() + 1); // Cộng thêm 1 năm
+            const day = String(expirationDate.getDate()).padStart(2, '0');
+            const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
+            const year = expirationDate.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+        // CACULATION NGÀY HẾT HẠN CỦA SANKO 12 - CFV
+        function calculateExpirationDate12() {
+            const today = new Date();
+            const expirationDate = new Date(today);
+            expirationDate.setMonth(today.getMonth() + 9);  // Cộng thêm 9 tháng
+            const day = String(expirationDate.getDate()).padStart(2, '0');
+            const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
+            const year = expirationDate.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+        // CACULATION NGÀY HẾT HẠN CỦA SANKO 711 - CFV
+        function calculateExpirationDate711() {
+            const today = new Date();
+            const expirationDate = new Date(today);
+            expirationDate.setMonth(today.getMonth() + 9);  // Cộng thêm 9 tháng
+            const day = String(expirationDate.getDate()).padStart(2, '0');
+            const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
+            const year = expirationDate.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+          // CACULATION NGÀY HẾT HẠN CỦA TOPACK 34 - CFV
+          function calculateExpirationDate34() {
+            const today = new Date();
+            const expirationDate = new Date(today);
+            expirationDate.setMonth(today.getMonth() + 9);  // Cộng thêm 9 tháng
+            const day = String(expirationDate.getDate()).padStart(2, '0');
+            const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
+            const year = expirationDate.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+            // CACULATION NGÀY HẾT HẠN CỦA SANKO 48 - NESC 3IN1
+            function calculateExpirationDate48() {
+            const today = new Date();
+            const expirationDate = new Date(today);
+            expirationDate.setMonth(today.getMonth() + 15);  // Cộng thêm 15 tháng
+            const day = String(expirationDate.getDate()).padStart(2, '0');
+            const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
+            const year = expirationDate.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+           // CACULATION NGÀY HẾT HẠN CỦA SANKO 26 - NESC 3IN1
+           function calculateExpirationDate26() {
+            const today = new Date();
+            const expirationDate = new Date(today);
+            expirationDate.setMonth(today.getMonth() + 15);  // Cộng thêm 15 tháng
+            const day = String(expirationDate.getDate()).padStart(2, '0');
+            const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
+            const year = expirationDate.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+           // CACULATION NGÀY HẾT HẠN CỦA MESPACK 12 - NESC 3IN1
+           function calculateExpirationDateMes12() {
+            const today = new Date();
+            const expirationDate = new Date(today);
+            expirationDate.setMonth(today.getMonth() + 15);  // Cộng thêm 15 tháng
+            const day = String(expirationDate.getDate()).padStart(2, '0');
+            const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
+            const year = expirationDate.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+           // CACULATION NGÀY HẾT HẠN CỦA MESPACK 3 - NESC 3IN1
+           function calculateExpirationDateMes3() {
+            const today = new Date();
+            const expirationDate = new Date(today);
+            expirationDate.setMonth(today.getMonth() + 15);  // Cộng thêm 15 tháng
+            const day = String(expirationDate.getDate()).padStart(2, '0');
+            const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
+            const year = expirationDate.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+
+    // --------------------------------------------------------------------------------------------------------
+    // *** HIỂN THỊ THÔNG TIN BATCH CODE VÀ NGÀY HẾT HẠN
+        function displayJulianDate() {
+            const julianDate = updateJulianDate();
+            const julianDate12 = updateJulianDate12();
+            const julianDate711 = updateJulianDate711();
+            const julianDate34 = updateJulianDate34();
+            const julianDate48 = updateJulianDate48();
+            const julianDate26 = updateJulianDate26();
+            const julianDateMes12 = updateJulianDateMes12();
+            const julianDateMes3 = updateJulianDateMes3();
+
+
+            const expirationDate = calculateExpirationDate();
+            const expirationDate12 = calculateExpirationDate12();
+            const expirationDate711 = calculateExpirationDate711();
+            const expirationDate34 = calculateExpirationDate34();
+            const expirationDate48 = calculateExpirationDate48();
+            const expirationDate26 = calculateExpirationDate26();
+            const expirationDateMes12 = calculateExpirationDateMes12();
+            const expirationDateMes3 = calculateExpirationDateMes3();
+
+        //------------------------------------------------------------------------------------------------
+        // KHU VỰC CẬP NHẬT THÔNG TIN LÊN WEB
+            // Cập nhật thông tin cho Sanko 14 hàng thứ nhất
+            document.getElementById('batchCode').textContent = julianDate;
+            document.getElementById('expirationDate').textContent = expirationDate;
+            // Cập nhật thông tin cho Sanko 12 hàng thứ hai
+            document.getElementById('batchCode2').textContent = julianDate12;
+            document.getElementById('expirationDate2').textContent = expirationDate12;
+            // Cập nhật thông tin cho Sanko 711 hàng thứ 3
+            document.getElementById('batchCode711').textContent = julianDate711;
+            document.getElementById('expirationDate711').textContent = expirationDate711;
+            // Cập nhật thông tin cho Topack 34 hàng thứ 3
+            document.getElementById('batchCode34').textContent = julianDate34;
+            document.getElementById('expirationDate34').textContent = expirationDate34;
+            // Cập nhật thông tin cho Sanko 48 hàng thứ 4
+            document.getElementById('batchCode48').textContent = julianDate48;
+            document.getElementById('expirationDate48').textContent = expirationDate48;
+            // Cập nhật thông tin cho Sanko 26 hàng thứ 5
+            document.getElementById('batchCode26').textContent = julianDate26;
+            document.getElementById('expirationDate26').textContent = expirationDate26;
+            // Cập nhật thông tin cho Mespack 12 hàng thứ 6
+            document.getElementById('batchCodeMes12').textContent = julianDateMes12;
+            document.getElementById('expirationDateMes12').textContent = expirationDateMes12;
+            // Cập nhật thông tin cho Mespack 3 hàng thứ 7
+            document.getElementById('batchCodeMes3').textContent = julianDateMes3;
+            document.getElementById('expirationDateMes3').textContent = expirationDateMes3;
+        }
+
+        // Cập nhật định dạng lịch Julian và ngày hết hạn mỗi ngày vào lúc 00:00
+        function scheduleDailyUpdate() {
+            const now = new Date();
+            const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+            const timeToMidnight = midnight - now;
+
+            setTimeout(function() {
+                displayJulianDate();
+                setInterval(displayJulianDate, 24 * 60 * 60 * 1000);
+            }, timeToMidnight);
+        }
+
+        window.onload = function() {
+            displayJulianDate();
+            scheduleDailyUpdate();
+        };
+    </script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Julian Date And Batch Code Display</h1>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Group</th>
+                    <th>Production Line</th>
+                    <th>Product Name</th>
+                    <th>Shelf Line</th>
+                    <th>Batch Code</th>
+                    <th>Expiration Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>2IN1</td>
+                    <td>LINE SANKO 14</td>
+                    <td>NESC CFSD</td>
+                    <td>12 tháng</td>
+                    <td id="batchCode"></td>
+                    <td id="expirationDate"></td>
+                </tr>
+                <tr>
+                    <td>2IN1</td>
+                    <td>LINE SANKO 12</td>
+                    <td>NESC CFV</td>
+                    <td>9 tháng</td>
+                    <td id="batchCode2"></td>
+                    <td id="expirationDate2"></td>
+                </tr>
+                <tr>
+                    <td>2IN1</td>
+                    <td>LINE SANKO 711</td>
+                    <td>NESC CFV</td>
+                    <td>9 tháng</td>
+                    <td id="batchCode711"></td>
+                    <td id="expirationDate711"></td>
+                </tr>
+                <tr>
+                    <td>2IN1</td>
+                    <td>LINE TOPACK 34</td>
+                    <td>NESC CFV</td>
+                    <td>9 tháng</td>
+                    <td id="batchCode34"></td>
+                    <td id="expirationDate34"></td>
+                </tr>
+                <br>
+                <tr>
+                    <td>3IN1</td>
+                    <td>LINE SANKO 48</td>
+                    <td>NESC ORIGI HARMONY & RICH STRONG</td>
+                    <td>15 tháng</td>
+                    <td id="batchCode48"></td>
+                    <td id="expirationDate48"></td>
+                </tr>
+                <tr>
+                    <td>3IN1</td>
+                    <td>LINE SANKO 26</td>
+                    <td>NESC ORIGI HARMONY & RICH STRONG</td>
+                    <td>15 tháng</td>
+                    <td id="batchCode26"></td>
+                    <td id="expirationDate26"></td>
+                </tr>
+                <tr>
+                    <td>3IN1</td>
+                    <td>LINE MESPACK 12</td>
+                    <td>NESC ORIGI HARMONY & RICH STRONG</td>
+                    <td>15 tháng</td>
+                    <td id="batchCodeMes12"></td>
+                    <td id="expirationDateMes12"></td>
+                </tr>
+                <tr>
+                    <td>3IN1</td>
+                    <td>LINE MESPACK 3</td>
+                    <td>NESC ORIGI HARMONY & RICH STRONG</td>
+                    <td>15 tháng</td>
+                    <td id="batchCodeMes3"></td>
+                    <td id="expirationDateMes3"></td>
+                </tr>
+                </tbody>
+            </tbody>
+        </table>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
