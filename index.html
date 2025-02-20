@@ -437,6 +437,22 @@
             displayJulianDate();
             scheduleDailyUpdate();
             displayCurrentDateTime();
+
+            const today = new Date().toLocaleDateString(); // Lấy ngày hiện tại (dd/mm/yyyy)
+    
+            let storedDate = localStorage.getItem('visitDate');
+            let visitCount = localStorage.getItem('visitCount') || 0;
+    
+            if (storedDate !== today) {
+            // Nếu sang ngày mới, reset lại bộ đếm
+            localStorage.setItem('visitDate', today);
+            visitCount = 0;
+            }
+    
+            visitCount++;
+            localStorage.setItem('visitCount', visitCount);
+
+            console.log(`Số lượt truy cập hôm nay: ${visitCount}`);
         };
     </script>
 </head>
