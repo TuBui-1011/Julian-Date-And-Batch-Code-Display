@@ -41,6 +41,37 @@
         }
     </style>
     <script>
+        // HÀM AddMonth xử lý vấn đề code nhảy ngày kế tiếp do ngày hiện tại của năm hết hạn không có: 
+
+        function addMonths(date, months) {
+            const result = new Date(date);
+            result.setMonth(result.getMonth() + months);
+            if (result.getDate() < date.getDate()) {
+                result.setDate(0);  // Lùi lại 1 ngày để về cuối tháng trước
+            }
+            return result;
+        }
+
+        function formatDate(date) {
+            let day = date.getDate().toString().padStart(2, '0');
+            let month = (date.getMonth() + 1).toString().padStart(2, '0');
+            let year = date.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+
+        function calculateExpiry(months) {
+        let today = new Date();
+        return formatDate(addMonths(today, months));
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById("expiry-9").textContent = calculateExpiry(9);
+        document.getElementById("expiry-10").textContent = calculateExpiry(10);
+        document.getElementById("expiry-12").textContent = calculateExpiry(12);
+        document.getElementById("expiry-15").textContent = calculateExpiry(15);
+        document.getElementById("expiry-18").textContent = calculateExpiry(18);
+    });
+
     //*** KHU VỰC HÀM JULIAN DATE
         // HÀM JuLianDate của Line Sanko 12
         function julianDate(year, month, day) {
@@ -504,8 +535,7 @@
         // CACULATION NGÀY HẾT HẠN CỦA SANKO 14 - CFSD
         function calculateExpirationDate() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setFullYear(today.getFullYear() + 1); // Cộng thêm 1 năm
+            const expirationDate = addMonths(today, 12); // HẠN SỬ DỤNG 12 THÁNG
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
@@ -514,8 +544,7 @@
         // CACULATION NGÀY HẾT HẠN CỦA SANKO 12 - CFV
         function calculateExpirationDate12() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 9);  // Cộng thêm 9 tháng
+            const expirationDate = addMonths(today, 9); // HẠN SỬ DỤNG 9 THÁNG
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
@@ -524,8 +553,7 @@
         // CACULATION NGÀY HẾT HẠN CỦA SANKO 711 - CFV
         function calculateExpirationDate711() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 9);  // Cộng thêm 9 tháng
+            const expirationDate = addMonths(today, 9); // HẠN SỬ DỤNG 9 THÁNG
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
@@ -534,8 +562,7 @@
           // CACULATION NGÀY HẾT HẠN CỦA TOPACK 34 - CFV
           function calculateExpirationDate34() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 9);  // Cộng thêm 9 tháng
+            const expirationDate = addMonths(today, 9); // HẠN SỬ DỤNG 9 THÁNG
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
@@ -544,8 +571,7 @@
             // CACULATION NGÀY HẾT HẠN CỦA SANKO 48 - NESC 3IN1
             function calculateExpirationDate48() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 15);  // Cộng thêm 15 tháng
+            const expirationDate = addMonths(today, 15); // HẠN SỬ DỤNG 15 THÁNG
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
@@ -554,8 +580,7 @@
            // CACULATION NGÀY HẾT HẠN CỦA SANKO 26 - NESC 3IN1
            function calculateExpirationDate26() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 15);  // Cộng thêm 15 tháng
+            const expirationDate = addMonths(today, 15); // HẠN SỬ DỤNG 15 THÁNG
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
@@ -564,8 +589,7 @@
            // CACULATION NGÀY HẾT HẠN CỦA MESPACK 12 - NESC 3IN1
            function calculateExpirationDateMes12() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 15);  // Cộng thêm 15 tháng
+            const expirationDate = addMonths(today, 15); // HẠN SỬ DỤNG 15 THÁNG
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
@@ -574,8 +598,7 @@
            // CACULATION NGÀY HẾT HẠN CỦA MESPACK 3 - NESC 3IN1
            function calculateExpirationDateMes3() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 15);  // Cộng thêm 15 tháng
+            const expirationDate = addMonths(today, 15);
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
@@ -584,8 +607,7 @@
            // CACULATION NGÀY HẾT HẠN CỦA OLYMPIA 2 - MILO
            function calculateExpirationDateO2() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 12);  // Cộng thêm 12 tháng
+            const expirationDate = addMonths(today, 12); // HẠN SỬ DỤNG 12 THÁNG
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
@@ -594,8 +616,7 @@
             // CACULATION NGÀY HẾT HẠN CỦA SU 52 - MILO
             function calculateExpirationDateSu52() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 12);  // Cộng thêm 12 tháng
+            const expirationDate = addMonths(today, 12); // HẠN SỬ DỤNG 12 THÁNG
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
@@ -604,8 +625,7 @@
             // CACULATION NGÀY HẾT HẠN CỦA NALBACH - MILO
             function calculateExpirationDateNal() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 12);  // Cộng thêm 12 tháng
+            const expirationDate = addMonths(today, 12); // Cộng thêm 12 tháng HSD
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
@@ -614,8 +634,7 @@
              // CACULATION NGÀY HẾT HẠN CỦA SANKO 10 - NESVITA LESS SUGAR
              function calculateExpirationDate10() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 12);  // Cộng thêm 12 tháng
+            const expirationDate = addMonths(today, 12); // Cộng thêm 12 tháng HSD
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
@@ -624,8 +643,7 @@
             // CACULATION NGÀY HẾT HẠN CỦA SANKO 10 - BOBA MILK TEA
             function calculateExpirationDateMilk10() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 10);  // Cộng thêm 10 tháng
+            const expirationDate = addMonths(today, 10); // Cộng thêm 10 tháng HSD
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
@@ -634,48 +652,55 @@
             // CACULATION NGÀY HẾT HẠN CỦA MESPACK - NESC GOLD
             function calculateExpirationDateGold24() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 24);  // Cộng thêm 24 tháng
+            const expirationDate = addMonths(today, 24); // Cộng thêm 24 tháng HSD
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
             return `${day}.${month}.${year}`;
         }
             // CACULATION NGÀY HẾT HẠN CỦA MESPACK - NESC REDCUP, EXPRESSO
-            function calculateExpirationDateMes18() {
+        //     function calculateExpirationDateMes18() {
+        //     const today = new Date();
+        //     const expirationDate = new Date(today);
+        //     expirationDate.setMonth(today.getMonth() + 18);  // Cộng thêm 18 tháng
+        //     const day = String(expirationDate.getDate()).padStart(2, '0');
+        //     const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
+        //     const year = expirationDate.getFullYear();
+        //     return `${day}.${month}.${year}`;
+        // }
+
+        function calculateExpirationDateMes18() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 18);  // Cộng thêm 18 tháng
+            const expirationDate = addMonths(today, 18);
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
             return `${day}.${month}.${year}`;
         }
-            // CACULATION NGÀY HẾT HẠN CỦA UNI - NESC REDCUP
+
+            // CACULATION NGÀY HẾT HẠN CỦA UNI - NESC REDCUP - Có sửa code để tính lùi lại ngày nếu không có ngày đó của năm sau
+
             function calculateExpirationDateUni18() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 18);  // Cộng thêm 18 tháng
+            const expirationDate = addMonths(today, 18); // hạn sử dụng 18 tháng
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
             return `${day}.${month}.${year}`;
         }
-             // CACULATION NGÀY HẾT HẠN CỦA TAWO - NESC REDCUP
+             // CACULATION NGÀY HẾT HẠN CỦA TAWO - NESC REDCUP - Có sửa code để tính lùi lại ngày nếu không có ngày đó của năm sau
              function calculateExpirationDateTawo18() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 18);  // Cộng thêm 18 tháng
+            const expirationDate = addMonths(today, 18); // hạn sử dụng 18 tháng
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
             return `${day}.${month}.${year}`;
         }
-            // CACULATION NGÀY HẾT HẠN CỦA TAWO - NESC REDCUP
+            // CACULATION NGÀY HẾT HẠN CỦA Wolf - NESC REDCUP - Có sửa code để tính lùi lại ngày nếu không có ngày đó của năm sau
             function calculateExpirationDateWolf18() {
             const today = new Date();
-            const expirationDate = new Date(today);
-            expirationDate.setMonth(today.getMonth() + 18);  // Cộng thêm 18 tháng
+            const expirationDate = addMonths(today, 18);
             const day = String(expirationDate.getDate()).padStart(2, '0');
             const month = String(expirationDate.getMonth() + 1).padStart(2, '0');
             const year = expirationDate.getFullYear();
@@ -847,6 +872,25 @@
         <p><strong>***Lưu ý quan trọng: Sau 12h đêm, các thông tin về lịch Julian, Batch Code, Hạn sử dụng sẽ tự động cập nhật sang ngày mới. 
             Người dùng cần chú ý để tránh sai sót khi kiểm tra thông tin sản phẩm.
         </strong></p>
+              <!-- Đoạn mã hiển thị ngày hết hạn -->
+<div id="expiry-info">
+    <p>Ngày hết hạn:</p>
+    <table border="1" cellspacing="0" cellpadding="5">
+        <thead>
+            <tr>
+                <th>Shelf Life</th>
+                <th>Expiration Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>9 tháng</td><td id="expiry-9"></td></tr>
+            <tr><td>10 tháng</td><td id="expiry-10"></td></tr>
+            <tr><td>12 tháng</td><td id="expiry-12"></td></tr>
+            <tr><td>15 tháng</td><td id="expiry-15"></td></tr>
+            <tr><td>18 tháng</td><td id="expiry-18"></td></tr>
+        </tbody>
+    </table>
+</div>
         <table class="table table-bordered">
             <thead>
                 <tr>
@@ -854,7 +898,7 @@
                     <th>Production Line</th>
                     <th>Product Name</th>
                     <th>Market</th>
-                    <th>Shelf Life</th>
+                    <th>Shelf Line</th>
                     <th>Batch Code</th>
                     <th>Expiration Date</th>
                 </tr>
@@ -998,7 +1042,7 @@
                 </tr>
                 <tr>
                     <td>PSC</td>
-                    <td>UNI</td>
+                    <td>PSCUNI</td>
                     <td>NESCAFE REDCUP</td>
                     <td>THAI LAN</td>
                     <td>18 tháng</td>
@@ -1007,7 +1051,7 @@
                 </tr>
                 <tr>
                     <td>PSC</td>
-                    <td>TAWO</td>
+                    <td>PSCTAWO</td>
                     <td>NESCAFE REDCUP</td>
                     <td>THAI LAN</td>
                     <td>18 tháng</td>
@@ -1016,7 +1060,7 @@
                 </tr>
                 <tr>
                     <td>PSC</td>
-                    <td>WOLF</td>
+                    <td>PSCWOLF</td>
                     <td>BARISTA, EXPRESSO, BLACKROAST</td>
                     <td>THAI LAN</td>
                     <td>18 tháng</td>
