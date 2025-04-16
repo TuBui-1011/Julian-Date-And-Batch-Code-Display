@@ -7,38 +7,62 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #f8f9fa;
-            font-family: Arial, sans-serif;
-        }
-        .container {
-            margin-top: 50px;
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #007bff;
-        }
-        .table {
-            background-color: white;
-        }
-        .table th, .table td {
-            text-align: center;
-            vertical-align: middle;
-        }
-        .table thead th {
-            background-color: #007bff;
-            color: white;
-        }
-        @media (max-width: 767.98px) {
-            .table-responsive {
-                overflow-x: auto;
-            }
-            .table {
-                width: 100%;
-                margin-bottom: 15px;
-                background-color: white;
-            }
-        }
+      background: linear-gradient(to bottom right, #e3f2fd, #ffffff);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-top: 30px;
+      margin-bottom: 30px;
+      font-weight: bold;
+      color: #007bff;
+    }
+    .container {
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      margin-top: 40px;
+      margin-bottom: 40px;
+    }
+    .table {
+      margin-top: 20px;
+    }
+    .table th {
+      background-color: #007bff;
+      color: white;
+    }
+    .table th, .table td {
+      vertical-align: middle;
+      text-align: center;
+    }
+    #currentDateTime, #julianDaily {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      color: #555;
+    }
+    #expiry-info {
+      margin: 20px 0;
+    }
+    #expiry-info table {
+      width: 100%;
+      background: #f1f1f1;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    #expiry-info th {
+      background-color: #6c757d;
+      color: white;
+    }
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+      .container {
+        padding: 15px;
+      }
+    }
     </style>
     <script>
         // HÀM AddMonth xử lý vấn đề code nhảy ngày kế tiếp do ngày hiện tại của năm hết hạn không có: 
@@ -865,17 +889,17 @@
     </script>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="mb-4">Julian Date And Batch Code Display</h1>
+    <div class="container">
+        <h1>Julian Date And Batch Code Display</h1>
         <p id="julianDaily" class="font-weight-bold"></p>
         <p id="currentDateTime" class="font-weight-bold"></p>
-        <p><strong>***Lưu ý quan trọng: Sau 12h đêm, các thông tin về lịch Julian, Batch Code, Hạn sử dụng sẽ tự động cập nhật sang ngày mới. 
+        <p class="text-danger font-weight-bold">***Lưu ý quan trọng: Sau 12h đêm, các thông tin về lịch Julian, Batch Code, Hạn sử dụng sẽ tự động cập nhật sang ngày mới. 
             Người dùng cần chú ý để tránh sai sót khi kiểm tra thông tin sản phẩm.
-        </strong></p>
+        </p>
               <!-- Đoạn mã hiển thị ngày hết hạn -->
 <div id="expiry-info">
-    <p>Ngày hết hạn:</p>
-    <table border="1" cellspacing="0" cellpadding="5">
+    <h5 class="text-primary">Danh sách ngày hết hạn theo Shelf Life</h5>
+    <table class="table table-bordered">
         <thead>
             <tr>
                 <th>Shelf Life</th>
