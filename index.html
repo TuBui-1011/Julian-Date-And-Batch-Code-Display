@@ -62,6 +62,12 @@
       .container {
         padding: 15px;
       }
+      table {
+    font-size: 0.85rem;
+    }
+    th, td {
+    white-space: nowrap;
+    }
     }
     </style>
     <script>
@@ -897,7 +903,7 @@
             Người dùng cần chú ý để tránh sai sót khi kiểm tra thông tin sản phẩm.
         </p>
               <!-- Đoạn mã hiển thị ngày hết hạn -->
-<div id="expiry-info">
+<div id="expiry-info" class="table-responsive" >
     <h5 class="text-primary">Danh sách ngày hết hạn theo Shelf Life</h5>
     <table class="table table-bordered">
         <thead>
@@ -915,6 +921,7 @@
         </tbody>
     </table>
 </div>
+<div class="table-responsive">
         <table class="table table-bordered">
             <thead>
                 <tr>
@@ -964,7 +971,6 @@
                     <td id="batchCode34"></td>
                     <td id="expirationDate34"></td>
                 </tr>
-                <br>
                 <tr>
                     <td>3IN1</td>
                     <td>SANKO 48</td>
@@ -1094,7 +1100,7 @@
                 </tbody>
             </tbody>
         </table>
-    </div>
+</div>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
