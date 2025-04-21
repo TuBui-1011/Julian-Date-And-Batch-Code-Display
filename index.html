@@ -69,6 +69,30 @@
     white-space: nowrap;
     }
     }
+        /* Cải thiện hiển thị bảng trên điện thoại */
+    @media (max-width: 576px) {
+    table {
+        font-size: 0.75rem;
+    }
+    .table th, .table td {
+        padding: 0.4rem;
+        white-space: nowrap;
+    }
+    .container {
+        padding: 10px;
+    }
+    #expiry-info h5 {
+        font-size: 1rem;
+        text-align: center;
+    }
+    #julianDaily, #currentDateTime {
+        text-align: center;
+        font-size: 0.95rem;
+    }
+    h1 {
+        font-size: 1.2rem;
+    }
+    }
     </style>
     <script>
         // HÀM AddMonth xử lý vấn đề code nhảy ngày kế tiếp do ngày hiện tại của năm hết hạn không có: 
