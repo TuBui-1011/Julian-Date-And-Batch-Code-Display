@@ -5,94 +5,186 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Julian Date And Batch Code Display</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f8f9fa;
+            --accent-color: #28a745;
+            --text-color: #2c3e50;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --transition: all 0.3s ease;
+        }
+
         body {
-      background: linear-gradient(to bottom right, #e3f2fd, #ffffff);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      color: #333;
-    }
-    h1 {
-      text-align: center;
-      margin-top: 30px;
-      margin-bottom: 30px;
-      font-weight: bold;
-      color: #007bff;
-    }
-    .container {
-      background-color: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-      margin-top: 40px;
-      margin-bottom: 40px;
-    }
-    .table {
-      margin-top: 20px;
-    }
-    .table th {
-      background-color: #007bff;
-      color: white;
-    }
-    .table th, .table td {
-      vertical-align: middle;
-      text-align: center;
-    }
-    #currentDateTime, #julianDaily {
-      font-size: 1.1rem;
-      margin-bottom: 10px;
-      color: #555;
-    }
-    #expiry-info {
-      margin: 20px 0;
-    }
-    #expiry-info table {
-      width: 100%;
-      background: #f1f1f1;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    #expiry-info th {
-      background-color: #6c757d;
-      color: white;
-    }
-    @media (max-width: 768px) {
-      h1 {
-        font-size: 1.5rem;
-      }
-      .container {
-        padding: 15px;
-      }
-      table {
-    font-size: 0.85rem;
-    }
-    th, td {
-    white-space: nowrap;
-    }
-    }
-        /* Cải thiện hiển thị bảng trên điện thoại */
-    @media (max-width: 576px) {
-    table {
-        font-size: 0.75rem;
-    }
-    .table th, .table td {
-        padding: 0.4rem;
-        white-space: nowrap;
-    }
-    .container {
-        padding: 10px;
-    }
-    #expiry-info h5 {
-        font-size: 1rem;
-        text-align: center;
-    }
-    #julianDaily, #currentDateTime {
-        text-align: center;
-        font-size: 0.95rem;
-    }
-    h1 {
-        font-size: 1.2rem;
-    }
-    }
+            background: linear-gradient(135deg, #f6f9fc 0%, #e9ecef 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .dashboard-header {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 2rem;
+        }
+
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .table-container {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .table-responsive {
+            margin: 0;
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) transparent;
+        }
+
+        .table {
+            margin: 0;
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .table th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table td {
+            padding: 1rem;
+            vertical-align: middle;
+            transition: var(--transition);
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(74, 144, 226, 0.05);
+        }
+
+        .table-groups {
+            border-left: 4px solid var(--accent-color);
+            font-weight: bold;
+        }
+
+        .batch-code {
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+        }
+
+        .expiry-date {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .info-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .table th, .table td {
+                padding: 0.75rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Performance Optimizations */
+        .table-container {
+            contain: content;
+        }
+
+        .lazy-load {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .lazy-load.loaded {
+            opacity: 1;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+        /* Custom Scrollbar */
+        .table-responsive::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .table-responsive::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        /* Print Optimization */
+        @media print {
+            .container {
+                max-width: none;
+                padding: 0;
+            }
+
+            .table-container {
+                box-shadow: none;
+            }
+
+            .info-card {
+                break-inside: avoid;
+            }
+        }
     </style>
     <script>
         // HÀM AddMonth xử lý vấn đề code nhảy ngày kế tiếp do ngày hiện tại của năm hết hạn không có: 
@@ -124,6 +216,7 @@
         document.getElementById("expiry-12").textContent = calculateExpiry(12);
         document.getElementById("expiry-15").textContent = calculateExpiry(15);
         document.getElementById("expiry-18").textContent = calculateExpiry(18);
+        document.getElementById("expiry-24").textContent = calculateExpiry(24);
     });
 
     //*** KHU VỰC HÀM JULIAN DATE
@@ -895,238 +988,299 @@
             }, timeToMidnight);
         }
 
+        function updateCurrentBatchCode() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth() + 1;
+            const day = today.getDate();
+            const julianDay = julianDate(year, month, day).toString().padStart(3, '0');
+            document.getElementById('currentBatchCode').textContent = `5${julianDay}2131`;
+        }
+
         window.onload = function() {
             displayJulianDate();
             scheduleDailyUpdate();
             displayCurrentDateTime();
+            updateCurrentBatchCode();
 
-        const today = new Date().toLocaleDateString(); // Lấy ngày hiện tại (dd/mm/yyyy)
+            const today = new Date().toLocaleDateString(); // Lấy ngày hiện tại (dd/mm/yyyy)
     
-        let storedDate = localStorage.getItem('visitDate');
-        let visitCount = localStorage.getItem('visitCount') || 0;
+            let storedDate = localStorage.getItem('visitDate');
+            let visitCount = localStorage.getItem('visitCount') || 0;
 
-        if (storedDate !== today) {
-        // Nếu sang ngày mới, reset lại bộ đếm
-        localStorage.setItem('visitDate', today);
-        visitCount = 0;
-        }
+            if (storedDate !== today) {
+                // Nếu sang ngày mới, reset lại bộ đếm
+                localStorage.setItem('visitDate', today);
+                visitCount = 0;
+            }
 
-        visitCount++;
-        localStorage.setItem('visitCount', visitCount);
+            visitCount++;
+            localStorage.setItem('visitCount', visitCount);
 
-        console.log(`Số lượt truy cập hôm nay: ${visitCount}`);
+            console.log(`Số lượt truy cập hôm nay: ${visitCount}`);
         };
     </script>
 </head>
 <body>
     <div class="container">
-        <h1>Julian Date And Batch Code Display</h1>
-        <p id="julianDaily" class="font-weight-bold"></p>
-        <p id="currentDateTime" class="font-weight-bold"></p>
-        <p class="text-danger font-weight-bold">***Lưu ý quan trọng: Sau 12h đêm, các thông tin về lịch Julian, Batch Code, Hạn sử dụng sẽ tự động cập nhật sang ngày mới. 
-            Người dùng cần chú ý để tránh sai sót khi kiểm tra thông tin sản phẩm.
-        </p>
-              <!-- Đoạn mã hiển thị ngày hết hạn -->
-<div id="expiry-info" class="table-responsive" >
-    <h5 class="text-primary">Danh sách ngày hết hạn theo Shelf Life</h5>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Shelf Life</th>
-                <th>Expiration Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr><td>9 tháng</td><td id="expiry-9"></td></tr>
-            <tr><td>10 tháng</td><td id="expiry-10"></td></tr>
-            <tr><td>12 tháng</td><td id="expiry-12"></td></tr>
-            <tr><td>15 tháng</td><td id="expiry-15"></td></tr>
-            <tr><td>18 tháng</td><td id="expiry-18"></td></tr>
-        </tbody>
-    </table>
-</div>
-<div class="table-responsive">
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Group</th>
-                    <th>Production Line</th>
-                    <th>Product Name</th>
-                    <th>Market</th>
-                    <th>Shelf Line</th>
-                    <th>Batch Code</th>
-                    <th>Expiration Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>2IN1</td>
-                    <td>SANKO 14</td>
-                    <td>NESC CFSD</td>
-                    <td>VIET NAM</td>
-                    <td>12 tháng</td>
-                    <td id="batchCode"></td>
-                    <td id="expirationDate"></td>
-                </tr>
-                <tr>
-                    <td>2IN1</td>
-                    <td>SANKO 12</td>
-                    <td>NESC CFV</td>
-                    <td>VIET NAM</td>
-                    <td>9 tháng</td>
-                    <td id="batchCode2"></td>
-                    <td id="expirationDate2"></td>
-                </tr>
-                <tr>
-                    <td>2IN1</td>
-                    <td>SANKO 711</td>
-                    <td>NESC CFV</td>
-                    <td>VIET NAM</td>
-                    <td>9 tháng</td>
-                    <td id="batchCode711"></td>
-                    <td id="expirationDate711"></td>
-                </tr>
-                <tr>
-                    <td>2IN1</td>
-                    <td>TOPACK 34</td>
-                    <td>NESC CFV</td>
-                    <td>VIET NAM</td>
-                    <td>9 tháng</td>
-                    <td id="batchCode34"></td>
-                    <td id="expirationDate34"></td>
-                </tr>
-                <tr>
-                    <td>3IN1</td>
-                    <td>SANKO 48</td>
-                    <td>NESC ORGL HARMONY & RICH STRONG</td>
-                    <td>VIET NAM</td>
-                    <td>15 tháng</td>
-                    <td id="batchCode48"></td>
-                    <td id="expirationDate48"></td>
-                </tr>
-                <tr>
-                    <td>3IN1</td>
-                    <td>SANKO 26</td>
-                    <td>NESC ORGL HARMONY & RICH STRONG</td>
-                    <td>VIET NAM</td>
-                    <td>15 tháng</td>
-                    <td id="batchCode26"></td>
-                    <td id="expirationDate26"></td>
-                </tr>
-                <tr>
-                    <td>3IN1</td>
-                    <td>MESPACK 12</td>
-                    <td>NESC ORGL HARMONY & RICH STRONG</td>
-                    <td>VIET NAM</td>
-                    <td>15 tháng</td>
-                    <td id="batchCodeMes12"></td>
-                    <td id="expirationDateMes12"></td>
-                </tr>
-                <tr>
-                    <td>3IN1</td>
-                    <td>MESPACK 3</td>
-                    <td>NESC ORGL HARMONY & RICH STRONG</td>
-                    <td>VIET NAM</td>
-                    <td>15 tháng</td>
-                    <td id="batchCodeMes3"></td>
-                    <td id="expirationDateMes3"></td>
-                </tr>
-                <tr>
-                    <td>MILO</td>
-                    <td>OLYMPIA 2</td>
-                    <td>MILO OOH, PWD 3IN1, PWD REG, REG BIB</td>
-                    <td>VIET NAM</td>
-                    <td>12 tháng</td>
-                    <td id="batchCodeO2"></td>
-                    <td id="expirationDateO2"></td>
-                </tr>
-                <tr>
-                    <td>MILO</td>
-                    <td>SU 52</td>
-                    <td>MILO 3IN1 SICH, 3IN1 POLY</td>
-                    <td>VIET NAM</td>
-                    <td>12 tháng</td>
-                    <td id="batchCodeSu52"></td>
-                    <td id="expirationDateSu52"></td>
-                </tr>
-                <tr>
-                    <td>MILO</td>
-                    <td>NALBACH</td>
-                    <td>MILO REGULAR JAR 400G</td>
-                    <td>VIET NAM</td>
-                    <td>12 tháng</td>
-                    <td id="batchCodeNal"></td>
-                    <td id="expirationDateNal"></td>
-                </tr>
-                <tr>
-                    <td>MILO</td>
-                    <td>SANKO 10</td>
-                    <td>NESVITA LESS SUGAR, REGULAR</td>
-                    <td>VIET NAM</td>
-                    <td>12 tháng</td>
-                    <td id="batchCode10"></td>
-                    <td id="expirationDate10"></td>
-                </tr>
-                <tr>
-                    <td>MILO</td>
-                    <td>SANKO 10</td>
-                    <td>BOBA & BROWN SUGAR MILK TEA</td>
-                    <td>VIET NAM</td>
-                    <td>10 tháng</td>
-                    <td id="batchCodeMilk10"></td>
-                    <td id="expirationDateMilk10"></td>
-                </tr>
-                <tr>
-                    <td>PSC</td>
-                    <td>MESPACK</td>
-                    <td>NESCAFE GOLD</td>
-                    <td>THAI LAN</td>
-                    <td>24 tháng</td>
-                    <td id="batchCodeGold24"></td>
-                    <td id="expirationDateGold24"></td>
-                </tr>
-                <tr>
-                    <td>PSC</td>
-                    <td>MESPACK</td>
-                    <td>REDCUP, EXPRESSO, BLACKROAST</td>
-                    <td>THAI LAN</td>
-                    <td>18 tháng</td>
-                    <td id="batchCodeMes18"></td>
-                    <td id="expirationDateMes18"></td>
-                </tr>
-                <tr>
-                    <td>PSC</td>
-                    <td>PSCUNI</td>
-                    <td>NESCAFE REDCUP</td>
-                    <td>THAI LAN</td>
-                    <td>18 tháng</td>
-                    <td id="batchCodeUni18"></td>
-                    <td id="expirationDateUni18"></td>
-                </tr>
-                <tr>
-                    <td>PSC</td>
-                    <td>PSCTAWO</td>
-                    <td>NESCAFE REDCUP</td>
-                    <td>THAI LAN</td>
-                    <td>18 tháng</td>
-                    <td id="batchCodeTawo18"></td>
-                    <td id="expirationDateTawo18"></td>
-                </tr>
-                <tr>
-                    <td>PSC</td>
-                    <td>PSCWOLF</td>
-                    <td>BARISTA, EXPRESSO, BLACKROAST</td>
-                    <td>THAI LAN</td>
-                    <td>18 tháng</td>
-                    <td id="batchCodeWolf18"></td>
-                    <td id="expirationDateWolf18"></td>
-                </tr>
-                </tbody>
-            </tbody>
-        </table>
-</div>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <div class="dashboard-header">
+            <h1 class="text-center mb-4">Julian Date And Batch Code Display</h1>
+            <div class="info-cards">
+                <div class="info-card">
+                    <h5 class="card-title">Current Julian Date</h5>
+                    <p id="julianDaily" class="font-weight-bold mb-0"></p>
+                </div>
+                <div class="info-card">
+                    <h5 class="card-title">Current Date & Time</h5>
+                    <p id="currentDateTime" class="font-weight-bold mb-0"></p>
+                </div>
+                <div class="info-card">
+                    <h5 class="card-title">Current Batch Code</h5>
+                    <p id="currentBatchCode" class="font-weight-bold mb-0" style="font-family: monospace; font-size: 1.2rem; color: var(--primary-color);"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div id="expiry-info">
+                <h5 class="text-primary p-3 mb-0">Shelf Life Expiration Dates</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0">
+                        <thead>
+                            <tr>
+                                <th>Shelf Life</th>
+                                <th>Expiration Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>9 months</td><td id="expiry-9"></td></tr>
+                            <tr><td>10 months</td><td id="expiry-10"></td></tr>
+                            <tr><td>12 months</td><td id="expiry-12"></td></tr>
+                            <tr><td>15 months</td><td id="expiry-15"></td></tr>
+                            <tr><td>18 months</td><td id="expiry-18"></td></tr>
+                            <tr><td>24 months</td><td id="expiry-24"></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Group</th>
+                            <th>Production Line</th>
+                            <th>Product Name</th>
+                            <th>Market</th>
+                            <th>Shelf Life</th>
+                            <th>Batch Code</th>
+                            <th>Expiration Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="lazy-load">
+                        <tr>
+                            <td>2IN1</td>
+                            <td>SANKO 14</td>
+                            <td>NESC CFSD</td>
+                            <td>VIET NAM</td>
+                            <td>12 tháng</td>
+                            <td id="batchCode"></td>
+                            <td id="expirationDate"></td>
+                        </tr>
+                        <tr>
+                            <td>2IN1</td>
+                            <td>SANKO 12</td>
+                            <td>NESC CFV</td>
+                            <td>VIET NAM</td>
+                            <td>9 tháng</td>
+                            <td id="batchCode2"></td>
+                            <td id="expirationDate2"></td>
+                        </tr>
+                        <tr>
+                            <td>2IN1</td>
+                            <td>SANKO 711</td>
+                            <td>NESC CFV</td>
+                            <td>VIET NAM</td>
+                            <td>9 tháng</td>
+                            <td id="batchCode711"></td>
+                            <td id="expirationDate711"></td>
+                        </tr>
+                        <tr>
+                            <td>2IN1</td>
+                            <td>TOPACK 34</td>
+                            <td>NESC CFV</td>
+                            <td>VIET NAM</td>
+                            <td>9 tháng</td>
+                            <td id="batchCode34"></td>
+                            <td id="expirationDate34"></td>
+                        </tr>
+                        <tr>
+                            <td>3IN1</td>
+                            <td>SANKO 48</td>
+                            <td>NESC ORGL HARMONY & RICH STRONG</td>
+                            <td>VIET NAM</td>
+                            <td>15 tháng</td>
+                            <td id="batchCode48"></td>
+                            <td id="expirationDate48"></td>
+                        </tr>
+                        <tr>
+                            <td>3IN1</td>
+                            <td>SANKO 26</td>
+                            <td>NESC ORGL HARMONY & RICH STRONG</td>
+                            <td>VIET NAM</td>
+                            <td>15 tháng</td>
+                            <td id="batchCode26"></td>
+                            <td id="expirationDate26"></td>
+                        </tr>
+                        <tr>
+                            <td>3IN1</td>
+                            <td>MESPACK 12</td>
+                            <td>NESC ORGL HARMONY & RICH STRONG</td>
+                            <td>VIET NAM</td>
+                            <td>15 tháng</td>
+                            <td id="batchCodeMes12"></td>
+                            <td id="expirationDateMes12"></td>
+                        </tr>
+                        <tr>
+                            <td>3IN1</td>
+                            <td>MESPACK 3</td>
+                            <td>NESC ORGL HARMONY & RICH STRONG</td>
+                            <td>VIET NAM</td>
+                            <td>15 tháng</td>
+                            <td id="batchCodeMes3"></td>
+                            <td id="expirationDateMes3"></td>
+                        </tr>
+                        <tr>
+                            <td>MILO</td>
+                            <td>OLYMPIA 2</td>
+                            <td>MILO OOH, PWD 3IN1, PWD REG, REG BIB</td>
+                            <td>VIET NAM</td>
+                            <td>12 tháng</td>
+                            <td id="batchCodeO2"></td>
+                            <td id="expirationDateO2"></td>
+                        </tr>
+                        <tr>
+                            <td>MILO</td>
+                            <td>SU 52</td>
+                            <td>MILO 3IN1 SICH, 3IN1 POLY</td>
+                            <td>VIET NAM</td>
+                            <td>12 tháng</td>
+                            <td id="batchCodeSu52"></td>
+                            <td id="expirationDateSu52"></td>
+                        </tr>
+                        <tr>
+                            <td>MILO</td>
+                            <td>NALBACH</td>
+                            <td>MILO REGULAR JAR 400G</td>
+                            <td>VIET NAM</td>
+                            <td>12 tháng</td>
+                            <td id="batchCodeNal"></td>
+                            <td id="expirationDateNal"></td>
+                        </tr>
+                        <tr>
+                            <td>MILO</td>
+                            <td>SANKO 10</td>
+                            <td>NESVITA LESS SUGAR, REGULAR</td>
+                            <td>VIET NAM</td>
+                            <td>12 tháng</td>
+                            <td id="batchCode10"></td>
+                            <td id="expirationDate10"></td>
+                        </tr>
+                        <tr>
+                            <td>MILO</td>
+                            <td>SANKO 10</td>
+                            <td>BOBA & BROWN SUGAR MILK TEA</td>
+                            <td>VIET NAM</td>
+                            <td>10 tháng</td>
+                            <td id="batchCodeMilk10"></td>
+                            <td id="expirationDateMilk10"></td>
+                        </tr>
+                        <tr>
+                            <td>PSC</td>
+                            <td>MESPACK</td>
+                            <td>NESCAFE GOLD</td>
+                            <td>THAI LAN</td>
+                            <td>24 tháng</td>
+                            <td id="batchCodeGold24"></td>
+                            <td id="expirationDateGold24"></td>
+                        </tr>
+                        <tr>
+                            <td>PSC</td>
+                            <td>MESPACK</td>
+                            <td>REDCUP, EXPRESSO, BLACKROAST</td>
+                            <td>THAI LAN</td>
+                            <td>18 tháng</td>
+                            <td id="batchCodeMes18"></td>
+                            <td id="expirationDateMes18"></td>
+                        </tr>
+                        <tr>
+                            <td>PSC</td>
+                            <td>PSCUNI</td>
+                            <td>NESCAFE REDCUP</td>
+                            <td>THAI LAN</td>
+                            <td>18 tháng</td>
+                            <td id="batchCodeUni18"></td>
+                            <td id="expirationDateUni18"></td>
+                        </tr>
+                        <tr>
+                            <td>PSC</td>
+                            <td>PSCTAWO</td>
+                            <td>NESCAFE REDCUP</td>
+                            <td>THAI LAN</td>
+                            <td>18 tháng</td>
+                            <td id="batchCodeTawo18"></td>
+                            <td id="expirationDateTawo18"></td>
+                        </tr>
+                        <tr>
+                            <td>PSC</td>
+                            <td>PSCWOLF</td>
+                            <td>BARISTA, EXPRESSO, BLACKROAST</td>
+                            <td>THAI LAN</td>
+                            <td>18 tháng</td>
+                            <td id="batchCodeWolf18"></td>
+                            <td id="expirationDateWolf18"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load scripts at the end for better performance -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" defer></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" defer></script>
+
+    <script>
+        // Performance optimization for JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            // Lazy loading for table
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('loaded');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.lazy-load').forEach(element => {
+                observer.observe(element);
+            });
+
+            // Debounced window resize handler
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    // Handle resize events here
+                }, 250);
+            });
+        });
+
+        // ... rest of your existing JavaScript code ...
+    </script>
 </body>
 </html>
