@@ -173,6 +173,54 @@ function formatBatchCode(date, suffix) {
 }
 
 // =================================================================================
+// KHU VỰC TÍNH TOÁN NGƯỢC (REVERSE CALCULATION)
+// =================================================================================
+
+/**
+ * Chuyển đổi từ ngày Julian sang đối tượng Date.
+ * @param {number} year - Năm (đầy đủ 4 chữ số).
+ * @param {number} julianDay - Ngày Julian (1-366).
+ * @returns {Date} - Đối tượng Date tương ứng.
+ */
+function julianToDate(year, julianDay) {
+  const date = new Date(year, 0, julianDay); // Tháng 0 là tháng 1, ngày 1 là ngày đầu tiên
+  return date;
+}
+
+/**
+ * Trừ một số tháng từ một ngày cụ thể.
+ * @param {Date} date - Ngày bắt đầu.
+ * @param {number} months - Số tháng cần trừ.
+ * @returns {Date} - Ngày mới sau khi đã trừ.
+ */
+function subtractMonths(date, months) {
+  const result = new Date(date);
+  result.setMonth(result.getMonth() - months);
+  return result;
+}
+
+/**
+ * Phân tích chuỗi ngày "DD.MM.YYYY" thành đối tượng Date.
+ * @param {string} dateString - Chuỗi ngày.
+ * @returns {Date|null} - Đối tượng Date hoặc null nếu không hợp lệ.
+ */
+function parseDateString(dateString) {
+  const parts = dateString.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  if (!parts) return null;
+  // parts[1] = DD, parts[2] = MM, parts[3] = YYYY
+  const date = new Date(parts[3], parts[2] - 1, parts[1]);
+  // Kiểm tra xem ngày có hợp lệ không (ví dụ: 30.02.2024 là không hợp lệ)
+  if (
+    date.getFullYear() == parts[3] &&
+    date.getMonth() == parts[2] - 1 &&
+    date.getDate() == parts[1]
+  ) {
+    return date;
+  }
+  return null;
+}
+
+// =================================================================================
 // KHU VỰC CẬP NHẬT GIAO DIỆN (UI UPDATE FUNCTIONS)
 // =================================================================================
 
@@ -271,6 +319,66 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Lên lịch cập nhật hàng ngày
   scheduleDailyUpdate();
+
+  // Xử lý sự kiện cho công cụ tính toán
+  const batchInput = document.getElementById("batchInput");
+  const calcFromBatchBtn = document.getElementById("calcFromBatchBtn");
+  const expiryInput = document.getElementById("expiryInput");
+  const shelfLifeSelect = document.getElementById("shelfLifeSelect");
+  const calcFromExpiryBtn = document.getElementById("calcFromExpiryBtn");
+  const calcResult = document.getElementById("calcResult");
+
+  // Tính từ Batch Code
+  calcFromBatchBtn.addEventListener("click", () => {
+    const batchCode = batchInput.value.trim();
+    if (batchCode.length < 4) {
+      calcResult.textContent = "Lỗi: Batch code không hợp lệ.";
+      calcResult.className = "alert alert-danger mt-4";
+      calcResult.style.display = "block";
+      return;
+    }
+
+    const yearDigit = parseInt(batchCode[0], 10);
+    const julianDay = parseInt(batchCode.substring(1, 4), 10);
+
+    // Suy luận năm (giả định năm thuộc thập kỷ hiện tại hoặc trước đó)
+    const currentYear = new Date().getFullYear();
+    const currentDecade = Math.floor(currentYear / 10) * 10;
+    let productionYear = currentDecade + yearDigit;
+    if (productionYear > currentYear) {
+      productionYear -= 10;
+    }
+
+    const productionDate = julianToDate(productionYear, julianDay);
+    calcResult.innerHTML = `<strong>Ngày sản xuất tính từ Batch Code:</strong> ${formatDate(
+      productionDate
+    )}`;
+    calcResult.className = "alert alert-success mt-4";
+    calcResult.style.display = "block";
+  });
+
+  // Tính từ Hạn sử dụng
+  calcFromExpiryBtn.addEventListener("click", () => {
+    const expiryDateStr = expiryInput.value.trim();
+    const shelfLife = parseInt(shelfLifeSelect.value, 10);
+
+    const expiryDate = parseDateString(expiryDateStr);
+
+    if (!expiryDate) {
+      calcResult.textContent =
+        "Lỗi: Định dạng ngày hết hạn không hợp lệ. Vui lòng dùng DD.MM.YYYY.";
+      calcResult.className = "alert alert-danger mt-4";
+      calcResult.style.display = "block";
+      return;
+    }
+
+    const productionDate = subtractMonths(expiryDate, shelfLife);
+    calcResult.innerHTML = `<strong>Ngày sản xuất tính từ Hạn sử dụng:</strong> ${formatDate(
+      productionDate
+    )}`;
+    calcResult.className = "alert alert-success mt-4";
+    calcResult.style.display = "block";
+  });
 
   // Tối ưu hóa hiệu suất (lazy loading, debouncing)
   const observer = new IntersectionObserver((entries) => {

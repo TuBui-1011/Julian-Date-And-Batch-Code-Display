@@ -84,6 +84,76 @@
         </div>
       </div>
 
+      <!-- ================== KHU VỰC TÍNH TOÁN MỚI ================== -->
+      <div class="calculator-container lazy-load">
+        <h4 class="text-center mb-4">Production Date Calculator</h4>
+        <div class="row">
+          <!-- Tính từ Batch Code -->
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">
+                  <i class="fas fa-barcode"></i> From Batch Code
+                </h5>
+                <div class="form-group">
+                  <label for="batchInput">Enter Batch Code:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="batchInput"
+                    placeholder="e.g., 60022131X"
+                  />
+                </div>
+                <button id="calcFromBatchBtn" class="btn btn-primary">
+                  Calculate
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Tính từ Hạn sử dụng -->
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">
+                  <i class="fas fa-calendar-times"></i> From Expiration Date
+                </h5>
+                <div class="form-group">
+                  <label for="expiryInput">Enter Expiration Date:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="expiryInput"
+                    placeholder="DD.MM.YYYY"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="shelfLifeSelect">Select Shelf Life:</label>
+                  <select class="form-control" id="shelfLifeSelect">
+                    <option value="9">9 months</option>
+                    <option value="10">10 months</option>
+                    <option value="12">12 months</option>
+                    <option value="15">15 months</option>
+                    <option value="18">18 months</option>
+                    <option value="24">24 months</option>
+                  </select>
+                </div>
+                <button id="calcFromExpiryBtn" class="btn btn-primary">
+                  Calculate
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Khu vực hiển thị kết quả -->
+        <div
+          id="calcResult"
+          class="alert alert-info mt-4"
+          role="alert"
+          style="display: none"
+        ></div>
+      </div>
+      <!-- ============================================================= -->
+
       <div class="table-container">
         <div class="table-responsive">
           <table class="table table-hover">
