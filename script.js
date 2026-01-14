@@ -659,21 +659,34 @@ async function captureAndValidate() {
     const batchCodeText = formatBatchCode(today, product.batchSuffix);
     let expectedText = "";
 
+    // Tạo chuỗi định dạng mong đợi dựa trên lựa chọn
     if (codeType === "stick") {
       expectedText = formatCustomExpiry(expiryDate, today, product.batchSuffix);
     } else if (codeType === "bag") {
-      // Chỉ so sánh phần ngày và batch code, bỏ qua time
-      expectedText = `${formatDate(expiryDate)} ${batchCodeText}`;
+      const formattedDate =
+        product.group === "PSC"
+          ? formatDateWithSlashes(expiryDate)
+          : formatDate(expiryDate);
+      expectedText = `${formattedDate} ${batchCodeText}`;
     } else if (codeType === "carton") {
-      // So sánh 2 dòng, thay <br> bằng khoảng trắng
-      expectedText = `${batchCodeText} HSD ${formatDateShortYear(expiryDate)}`;
+      if (product.group === "PSC") {
+        const formattedDate = formatDateWithSlashes(expiryDate);
+        // Chỉ cần batch code và ngày để validate, bỏ qua time
+        expectedText = `${batchCodeText} ${formattedDate}`;
+      } else {
+        const formattedShortDate = formatDateShortYear(expiryDate);
+        expectedText = `${batchCodeText} HSD ${formattedShortDate}`;
+      }
     }
 
     // 4. So sánh và hiển thị kết quả
     let isValid = false;
     if (codeType === "bag") {
       // Đối với 'bag', kiểm tra cả ngày và batch code, bỏ qua thời gian
-      const expectedDate = formatDate(expiryDate);
+      const expectedDate =
+        product.group === "PSC"
+          ? formatDateWithSlashes(expiryDate)
+          : formatDate(expiryDate);
       isValid =
         detectedText.includes(expectedDate) &&
         detectedText.includes(batchCodeText);
@@ -957,21 +970,34 @@ async function captureAndValidate() {
     const batchCodeText = formatBatchCode(today, product.batchSuffix);
     let expectedText = "";
 
+    // Tạo chuỗi định dạng mong đợi dựa trên lựa chọn
     if (codeType === "stick") {
       expectedText = formatCustomExpiry(expiryDate, today, product.batchSuffix);
     } else if (codeType === "bag") {
-      // Chỉ so sánh phần ngày và batch code, bỏ qua time
-      expectedText = `${formatDate(expiryDate)} ${batchCodeText}`;
+      const formattedDate =
+        product.group === "PSC"
+          ? formatDateWithSlashes(expiryDate)
+          : formatDate(expiryDate);
+      expectedText = `${formattedDate} ${batchCodeText}`;
     } else if (codeType === "carton") {
-      // So sánh 2 dòng, thay <br> bằng khoảng trắng
-      expectedText = `${batchCodeText} HSD ${formatDateShortYear(expiryDate)}`;
+      if (product.group === "PSC") {
+        const formattedDate = formatDateWithSlashes(expiryDate);
+        // Chỉ cần batch code và ngày để validate, bỏ qua time
+        expectedText = `${batchCodeText} ${formattedDate}`;
+      } else {
+        const formattedShortDate = formatDateShortYear(expiryDate);
+        expectedText = `${batchCodeText} HSD ${formattedShortDate}`;
+      }
     }
 
     // 4. So sánh và hiển thị kết quả
     let isValid = false;
     if (codeType === "bag") {
       // Đối với 'bag', kiểm tra cả ngày và batch code, bỏ qua thời gian
-      const expectedDate = formatDate(expiryDate);
+      const expectedDate =
+        product.group === "PSC"
+          ? formatDateWithSlashes(expiryDate)
+          : formatDate(expiryDate);
       isValid =
         detectedText.includes(expectedDate) &&
         detectedText.includes(batchCodeText);
