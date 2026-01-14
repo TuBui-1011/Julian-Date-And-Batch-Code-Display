@@ -581,9 +581,13 @@ async function captureAndValidate() {
 
   // 2. Sử dụng Tesseract.js để nhận dạng văn bản
   try {
+    // Thêm whitelist để cải thiện độ chính xác
+    const whitelist = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ ./:";
+
     const {
       data: { text },
     } = await Tesseract.recognize(imageDataUrl, "eng", {
+      tessedit_char_whitelist: whitelist, // Thêm tùy chọn whitelist
       logger: (m) => {
         ocrStatus.textContent = `${m.status} (${Math.round(
           m.progress * 100
@@ -591,7 +595,12 @@ async function captureAndValidate() {
       },
     });
 
-    const detectedText = text.trim().replace(/\s+/g, " "); // Chuẩn hóa khoảng trắng
+    // Xử lý văn bản nhận dạng được để chuẩn hóa
+    const detectedText = text
+      .trim()
+      .replace(/\s+/g, " ") // Chuẩn hóa khoảng trắng
+      .replace(/(\d)\s(\d)/g, "$1$2"); // Gộp các số bị tách ra, ví dụ "B 1 4" -> "B14"
+
     ocrStatus.textContent = `Detected Text: "${detectedText}"`;
 
     // 3. Lấy định dạng đúng để so sánh DỰA TRÊN SẢN PHẨM ĐƯỢC CHỌN
@@ -625,6 +634,16 @@ async function captureAndValidate() {
       isValid =
         detectedText.includes(expectedDate) &&
         detectedText.includes(batchCodeText);
+    } else if (codeType === "stick") {
+      // Đối với 'stick', so sánh từng phần để linh hoạt hơn
+      const parts = expectedText.split(" ");
+      isValid = parts.every((part) => detectedText.includes(part));
+    } else if (codeType === "carton") {
+      // Đối với 'carton', kiểm tra batch code và ngày
+      const expectedShortDate = formatDateShortYear(expiryDate);
+      isValid =
+        detectedText.includes(batchCodeText) &&
+        detectedText.includes(expectedShortDate);
     } else {
       // Logic cũ cho các loại khác (kiểm tra phần đầu)
       isValid = detectedText.includes(expectedText.split(" ")[0]);
@@ -818,9 +837,13 @@ async function captureAndValidate() {
 
   // 2. Sử dụng Tesseract.js để nhận dạng văn bản
   try {
+    // Thêm whitelist để cải thiện độ chính xác
+    const whitelist = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ ./:";
+
     const {
       data: { text },
     } = await Tesseract.recognize(imageDataUrl, "eng", {
+      tessedit_char_whitelist: whitelist, // Thêm tùy chọn whitelist
       logger: (m) => {
         ocrStatus.textContent = `${m.status} (${Math.round(
           m.progress * 100
@@ -828,7 +851,12 @@ async function captureAndValidate() {
       },
     });
 
-    const detectedText = text.trim().replace(/\s+/g, " "); // Chuẩn hóa khoảng trắng
+    // Xử lý văn bản nhận dạng được để chuẩn hóa
+    const detectedText = text
+      .trim()
+      .replace(/\s+/g, " ") // Chuẩn hóa khoảng trắng
+      .replace(/(\d)\s(\d)/g, "$1$2"); // Gộp các số bị tách ra, ví dụ "B 1 4" -> "B14"
+
     ocrStatus.textContent = `Detected Text: "${detectedText}"`;
 
     // 3. Lấy định dạng đúng để so sánh DỰA TRÊN SẢN PHẨM ĐƯỢC CHỌN
@@ -862,6 +890,16 @@ async function captureAndValidate() {
       isValid =
         detectedText.includes(expectedDate) &&
         detectedText.includes(batchCodeText);
+    } else if (codeType === "stick") {
+      // Đối với 'stick', so sánh từng phần để linh hoạt hơn
+      const parts = expectedText.split(" ");
+      isValid = parts.every((part) => detectedText.includes(part));
+    } else if (codeType === "carton") {
+      // Đối với 'carton', kiểm tra batch code và ngày
+      const expectedShortDate = formatDateShortYear(expiryDate);
+      isValid =
+        detectedText.includes(batchCodeText) &&
+        detectedText.includes(expectedShortDate);
     } else {
       // Logic cũ cho các loại khác (kiểm tra phần đầu)
       isValid = detectedText.includes(expectedText.split(" ")[0]);
