@@ -342,12 +342,20 @@
         <div class="card">
           <div class="card-body">
             <div class="form-row">
-              <div class="form-group col-md-6">
-                <label for="productSelect">Select Production Line:</label>
-                <select class="form-control" id="productSelect"></select>
+              <div class="form-group col-md-4">
+                <label for="groupSelect">1. Select Group:</label>
+                <select class="form-control" id="groupSelect"></select>
               </div>
-              <div class="form-group col-md-6">
-                <label for="codeTypeSelect">Select Code Type:</label>
+              <div class="form-group col-md-4">
+                <label for="productSelect">2. Select Production Line:</label>
+                <select
+                  class="form-control"
+                  id="productSelect"
+                  disabled
+                ></select>
+              </div>
+              <div class="form-group col-md-4">
+                <label for="codeTypeSelect">3. Select Code Type:</label>
                 <select class="form-control" id="codeTypeSelect">
                   <option value="stick">Stick</option>
                   <option value="bag">Bag</option>

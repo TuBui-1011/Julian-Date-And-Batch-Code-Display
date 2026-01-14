@@ -135,7 +135,7 @@ const products = [
     expiryCartonId: "expirationDateCartonMilk10",
   },
   {
-    group: "2IN1",
+    group: "PSC",
     productionLine: "GOLD 24",
     shelfLife: 24,
     batchSuffix: "C",
@@ -145,7 +145,7 @@ const products = [
     expiryCartonId: "expirationDateCartonGold24",
   },
   {
-    group: "2IN1",
+    group: "PSC",
     productionLine: "SANKO Mes 18",
     shelfLife: 18,
     batchSuffix: "C",
@@ -155,7 +155,7 @@ const products = [
     expiryCartonId: "expirationDateCartonMes18",
   },
   {
-    group: "2IN1",
+    group: "PSC",
     productionLine: "UNI 18",
     shelfLife: 18,
     batchSuffix: "N",
@@ -165,7 +165,7 @@ const products = [
     expiryCartonId: "expirationDateCartonUni18",
   },
   {
-    group: "2IN1",
+    group: "PSC",
     productionLine: "TAWO 18",
     shelfLife: 18,
     batchSuffix: "G",
@@ -218,6 +218,18 @@ function formatDate(date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
   return `${day}.${month}.${year}`;
+}
+
+/**
+ * Định dạng đối tượng Date thành chuỗi "DD/MM/YYYY".
+ * @param {Date} date - Đối tượng Date cần định dạng.
+ * @returns {string} - Chuỗi ngày tháng đã định dạng.
+ */
+function formatDateWithSlashes(date) {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 /**
@@ -387,16 +399,35 @@ function updateAllProductInfo() {
     // Cập nhật cho cột mới (Bag)
     if (expiryBagEl) {
       const expiryDate = addMonths(today, product.shelfLife);
-      const formattedExpiryDate = formatDate(expiryDate);
       const currentTime = new Date().toLocaleTimeString("vi-VN");
-      // Sử dụng innerHTML để thêm thẻ <br> ngắt dòng
-      expiryBagEl.innerHTML = `${formattedExpiryDate}<br>${batchCodeText} ${currentTime}`;
+      let formattedExpiryDate;
+
+      // Áp dụng định dạng riêng cho nhóm PSC
+      if (product.group === "PSC") {
+        formattedExpiryDate = formatDateWithSlashes(expiryDate);
+        // Định dạng cho PSC: Time rồi đến BatchCode
+        expiryBagEl.innerHTML = `${formattedExpiryDate}<br>${currentTime} ${batchCodeText}`;
+      } else {
+        formattedExpiryDate = formatDate(expiryDate);
+        // Định dạng cho các nhóm khác: BatchCode rồi đến Time
+        expiryBagEl.innerHTML = `${formattedExpiryDate}<br>${batchCodeText} ${currentTime}`;
+      }
     }
     // Cập nhật cho cột mới (Carton)
     if (expiryCartonEl) {
       const expiryDate = addMonths(today, product.shelfLife);
-      const formattedShortDate = formatDateShortYear(expiryDate);
-      expiryCartonEl.innerHTML = `${batchCodeText}<br>HSD ${formattedShortDate}`;
+
+      // Áp dụng định dạng riêng cho nhóm PSC
+      if (product.group === "PSC") {
+        const formattedFullDate = formatDateWithSlashes(expiryDate);
+        const currentTime = new Date().toLocaleTimeString("vi-VN");
+        // Định dạng cho PSC: BatchCode Date Time trên một dòng
+        expiryCartonEl.innerHTML = `${batchCodeText} ${formattedFullDate} ${currentTime}`;
+      } else {
+        // Giữ nguyên định dạng cũ cho các nhóm khác
+        const formattedShortDate = formatDateShortYear(expiryDate);
+        expiryCartonEl.innerHTML = `${batchCodeText}<br>HSD ${formattedShortDate}`;
+      }
     }
   });
 }
@@ -431,6 +462,18 @@ document.addEventListener("DOMContentLoaded", function () {
   // Cập nhật lần đầu khi tải trang
   displayCurrentDateTime();
   updateAllProductInfo();
+
+  // Điền các lựa chọn sản phẩm vào dropdown
+  populateGroupSelector();
+  populateProductSelector(); // Chạy lần đầu để hiển thị dropdown line bị vô hiệu hóa
+
+  // Thêm event listener cho dropdown Group
+  const groupSelect = document.getElementById("groupSelect");
+  if (groupSelect) {
+    groupSelect.addEventListener("change", (event) => {
+      populateProductSelector(event.target.value);
+    });
+  }
 
   // Bắt đầu đồng hồ
   setInterval(displayCurrentDateTime, 1000);
@@ -665,18 +708,51 @@ async function captureAndValidate() {
 }
 
 /**
- * Điền các lựa chọn sản phẩm vào dropdown.
+ * Điền các lựa chọn Group duy nhất vào dropdown.
  */
-function populateProductSelector() {
+function populateGroupSelector() {
+  const groupSelect = document.getElementById("groupSelect");
+  if (!groupSelect) return;
+
+  // Lấy các group duy nhất từ mảng products
+  const groups = [...new Set(products.map((p) => p.group))];
+
+  groupSelect.innerHTML = '<option value="">-- Select Group --</option>'; // Thêm lựa chọn mặc định
+  groups.forEach((group) => {
+    const option = document.createElement("option");
+    option.value = group;
+    option.textContent = group;
+    groupSelect.appendChild(option);
+  });
+}
+
+/**
+ * Điền các lựa chọn sản phẩm vào dropdown dựa trên group đã chọn.
+ * @param {string} selectedGroup - Group đã được chọn.
+ */
+function populateProductSelector(selectedGroup) {
   const productSelect = document.getElementById("productSelect");
-  if (productSelect) {
-    products.forEach((product, index) => {
-      const option = document.createElement("option");
-      option.value = index; // Sử dụng index làm value
-      option.textContent = `${product.group} - ${product.productionLine} (${product.shelfLife}m)`;
-      productSelect.appendChild(option);
-    });
+  if (!productSelect) return;
+
+  productSelect.innerHTML = ""; // Xóa các lựa chọn cũ
+  productSelect.disabled = true;
+
+  if (!selectedGroup) {
+    productSelect.innerHTML = '<option value="">-- Select Line --</option>';
+    return;
   }
+
+  // Lọc các sản phẩm thuộc group đã chọn
+  products.forEach((product, index) => {
+    if (product.group === selectedGroup) {
+      const option = document.createElement("option");
+      option.value = index; // Vẫn sử dụng index làm value
+      option.textContent = `${product.productionLine} (${product.shelfLife}m)`;
+      productSelect.appendChild(option);
+    }
+  });
+
+  productSelect.disabled = false; // Kích hoạt dropdown
 }
 
 // Chạy khi toàn bộ DOM đã được tải
@@ -686,7 +762,16 @@ document.addEventListener("DOMContentLoaded", function () {
   updateAllProductInfo();
 
   // Điền các lựa chọn sản phẩm vào dropdown
-  populateProductSelector();
+  populateGroupSelector();
+  populateProductSelector(); // Chạy lần đầu để hiển thị dropdown line bị vô hiệu hóa
+
+  // Thêm event listener cho dropdown Group
+  const groupSelect = document.getElementById("groupSelect");
+  if (groupSelect) {
+    groupSelect.addEventListener("change", (event) => {
+      populateProductSelector(event.target.value);
+    });
+  }
 
   // Bắt đầu đồng hồ
   setInterval(displayCurrentDateTime, 1000);
