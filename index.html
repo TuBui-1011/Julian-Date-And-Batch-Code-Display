@@ -341,27 +341,8 @@
         <h4 class="text-center mb-4">Code Validator via Camera</h4>
         <div class="card">
           <div class="card-body">
-            <div class="form-row">
-              <div class="form-group col-md-4">
-                <label for="groupSelect">1. Select Group:</label>
-                <select class="form-control" id="groupSelect"></select>
-              </div>
-              <div class="form-group col-md-4">
-                <label for="productSelect">2. Select Production Line:</label>
-                <select
-                  class="form-control"
-                  id="productSelect"
-                  disabled
-                ></select>
-              </div>
-              <div class="form-group col-md-4">
-                <label for="codeTypeSelect">3. Select Code Type:</label>
-                <select class="form-control" id="codeTypeSelect">
-                  <option value="stick">Stick</option>
-                  <option value="bag">Bag</option>
-                  <option value="carton">Carton</option>
-                </select>
-              </div>
+            <div class="row mb-3">
+              <!-- ... các dropdowns ... -->
             </div>
             <button id="startCameraBtn" class="btn btn-primary">
               <i class="fas fa-camera"></i> Start Camera
@@ -376,15 +357,17 @@
                 playsinline
                 style="width: 100%; height: auto"
               ></video>
-              <!-- Thêm khung ngắm vào đây -->
               <div id="viewfinder"></div>
               <button id="captureBtn" class="btn btn-success mt-2">
                 <i class="fas fa-crosshairs"></i> Capture & Validate
               </button>
             </div>
+            <!-- THÊM DÒNG NÀY VÀO ĐÂY -->
+            <p id="ocrStatus" class="mt-2 text-muted"></p>
             <div
               id="validationResult"
               class="alert mt-3"
+              role="alert"
               style="display: none"
             ></div>
           </div>
