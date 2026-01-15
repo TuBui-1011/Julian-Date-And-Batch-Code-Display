@@ -578,15 +578,23 @@ async function startCamera() {
   const video = document.getElementById("videoElement");
   const cameraFeed = document.getElementById("cameraFeed");
   const startBtn = document.getElementById("startCameraBtn");
+  const captureBtn = document.getElementById("captureBtn"); // Thêm nút capture
   const ocrStatus = document.getElementById("ocrStatus");
 
-  cameraFeed.style.display = "block";
+  // Ẩn nút Start, hiện camera feed và nút Capture
   startBtn.style.display = "none";
+  cameraFeed.style.display = "block";
+  captureBtn.style.display = "block"; // Hiện nút Capture
+
   ocrStatus.textContent = "Starting camera...";
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" }, // Ưu tiên camera sau
+      video: {
+        facingMode: { ideal: "environment" }, // Ưu tiên camera sau
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
     });
     video.srcObject = stream;
     video.onloadedmetadata = () => {
@@ -598,6 +606,11 @@ async function startCamera() {
     ocrStatus.textContent =
       "Error: Could not access camera. Please check permissions.";
     ocrStatus.className = "text-danger";
+
+    // Nếu có lỗi, ẩn feed và hiện lại nút Start
+    startBtn.style.display = "block";
+    cameraFeed.style.display = "none";
+    captureBtn.style.display = "none";
   }
 }
 

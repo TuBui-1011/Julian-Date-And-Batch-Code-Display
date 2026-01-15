@@ -341,28 +341,55 @@
         <h4 class="text-center mb-4">Code Validator via Camera</h4>
         <div class="card">
           <div class="card-body">
-            <div class="row mb-3">
-              <!-- ... các dropdowns ... -->
+            <!-- Div riêng cho các lựa chọn -->
+            <div id="validator-options">
+              <div class="row mb-3">
+                <div class="col-md-4">
+                  <label for="groupSelect">1. Select Group:</label>
+                  <select id="groupSelect" class="form-control"></select>
+                </div>
+                <div class="col-md-4">
+                  <label for="productSelect">2. Select Production Line:</label>
+                  <select id="productSelect" class="form-control"></select>
+                </div>
+                <div class="col-md-4">
+                  <label for="codeTypeSelect">3. Select Code Type:</label>
+                  <select id="codeTypeSelect" class="form-control">
+                    <option value="stick">Stick</option>
+                    <option value="bag">Bag</option>
+                    <option value="carton">Carton</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            <button id="startCameraBtn" class="btn btn-primary">
-              <i class="fas fa-camera"></i> Start Camera
-            </button>
-            <div
-              id="cameraFeed"
-              class="mt-3"
-              style="display: none; position: relative"
-            >
-              <video
-                id="videoElement"
-                playsinline
-                style="width: 100%; height: auto"
-              ></video>
-              <div id="viewfinder"></div>
-              <button id="captureBtn" class="btn btn-success mt-2">
+
+            <!-- Div riêng cho điều khiển camera -->
+            <div id="camera-controls">
+              <button id="startCameraBtn" class="btn btn-primary">
+                <i class="fas fa-camera"></i> Start Camera
+              </button>
+              <div
+                id="cameraFeed"
+                class="mt-3"
+                style="display: none; position: relative"
+              >
+                <video
+                  id="videoElement"
+                  playsinline
+                  style="width: 100%; height: auto"
+                ></video>
+                <div id="viewfinder"></div>
+              </div>
+              <!-- Đưa nút Capture ra ngoài video feed -->
+              <button
+                id="captureBtn"
+                class="btn btn-success mt-2"
+                style="display: none"
+              >
                 <i class="fas fa-crosshairs"></i> Capture & Validate
               </button>
             </div>
-            <!-- THÊM DÒNG NÀY VÀO ĐÂY -->
+
             <p id="ocrStatus" class="mt-2 text-muted"></p>
             <div
               id="validationResult"
