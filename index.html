@@ -366,17 +366,21 @@
             <button id="startCameraBtn" class="btn btn-primary">
               <i class="fas fa-camera"></i> Start Camera
             </button>
-            <div id="cameraFeed" class="mt-3" style="display: none">
+            <div
+              id="cameraFeed"
+              class="mt-3"
+              style="display: none; position: relative"
+            >
               <video
                 id="videoElement"
-                width="100%"
-                autoplay
                 playsinline
+                style="width: 100%; height: auto"
               ></video>
+              <!-- Thêm khung ngắm vào đây -->
+              <div id="viewfinder"></div>
               <button id="captureBtn" class="btn btn-success mt-2">
                 <i class="fas fa-crosshairs"></i> Capture & Validate
               </button>
-              <p id="ocrStatus" class="mt-2"></p>
             </div>
             <div
               id="validationResult"

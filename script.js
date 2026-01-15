@@ -609,28 +609,45 @@ async function captureAndValidate() {
   const ocrStatus = document.getElementById("ocrStatus");
   const validationResult = document.getElementById("validationResult");
   const codeType = document.getElementById("codeTypeSelect").value;
-  const productIndex = document.getElementById("productSelect").value; // Lấy index của sản phẩm được chọn
+  const productIndex = document.getElementById("productSelect").value;
 
   ocrStatus.textContent = "Processing image... Please wait.";
   validationResult.style.display = "none";
 
-  // 1. Chụp ảnh từ video vào canvas
+  // 1. Chụp ảnh và tiền xử lý ảnh qua Canvas
   const canvas = document.createElement("canvas");
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-  const context = canvas.getContext("2d");
+  const context = canvas.getContext("2d", { willReadFrequently: true });
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const imageDataUrl = canvas.toDataURL("image/png");
 
-  // 2. Sử dụng Tesseract.js để nhận dạng văn bản
+  // --- BƯỚC 1: TIỀN XỬ LÝ ẢNH ---
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    // Grayscale (Luminosity method)
+    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    // Thresholding (Binarization) - ngưỡng 128
+    const threshold = 128;
+    const color = gray < threshold ? 0 : 255;
+    data[i] = data[i + 1] = data[i + 2] = color;
+  }
+  context.putImageData(imageData, 0, 0);
+  // Bạn có thể thêm một thẻ <img> vào HTML để hiển thị ảnh đã xử lý nhằm debug
+  // document.getElementById('processedImage').src = canvas.toDataURL('image/png');
+  const processedImageDataUrl = canvas.toDataURL("image/png");
+
+  // 2. Sử dụng Tesseract.js với cấu hình chuyên dụng
   try {
-    // Thêm whitelist để cải thiện độ chính xác
-    const whitelist = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ ./:";
+    // --- BƯỚC 2: CẤU HÌNH TESSERACT.JS ---
+    const whitelist = "0123456789/:HSDABCFGJKLMNPUVX "; // Whitelist đã được tối ưu
+    const psm = "6"; // Page Segmentation Mode 6: Assume a single uniform block of text.
 
     const {
       data: { text },
-    } = await Tesseract.recognize(imageDataUrl, "eng", {
-      tessedit_char_whitelist: whitelist, // Thêm tùy chọn whitelist
+    } = await Tesseract.recognize(processedImageDataUrl, "eng", {
+      tessedit_char_whitelist: whitelist,
+      tessedit_pageseg_mode: psm,
       logger: (m) => {
         ocrStatus.textContent = `${m.status} (${Math.round(
           m.progress * 100
@@ -638,17 +655,11 @@ async function captureAndValidate() {
       },
     });
 
-    // Xử lý văn bản nhận dạng được để chuẩn hóa
-    const detectedText = text
-      .trim()
-      .replace(/\s+/g, " ") // Chuẩn hóa khoảng trắng
-      .replace(/(\d)\s(\d)/g, "$1$2"); // Gộp các số bị tách ra, ví dụ "B 1 4" -> "B14"
-
+    const detectedText = text.trim().replace(/\s+/g, " ");
     ocrStatus.textContent = `Detected Text: "${detectedText}"`;
 
-    // 3. Lấy định dạng đúng để so sánh DỰA TRÊN SẢN PHẨM ĐƯỢC CHỌN
+    // 3. Lấy định dạng đúng để so sánh
     const today = new Date();
-    // Lấy đúng sản phẩm từ mảng products dựa trên lựa chọn của người dùng
     const product = products[productIndex];
     if (!product) {
       ocrStatus.textContent = "Error: Invalid product selected.";
@@ -657,63 +668,80 @@ async function captureAndValidate() {
 
     const expiryDate = addMonths(today, product.shelfLife);
     const batchCodeText = formatBatchCode(today, product.batchSuffix);
-    let expectedText = "";
+    let expectedText = ""; // Vẫn tạo để hiển thị cho người dùng
 
-    // Tạo chuỗi định dạng mong đợi dựa trên lựa chọn
+    // --- BƯỚC 3: HẬU XỬ LÝ VÀ VALIDATE BẰNG REGEX ---
+    let isValid = false;
+    let extractedData = "";
+
     if (codeType === "stick") {
       expectedText = formatCustomExpiry(expiryDate, today, product.batchSuffix);
-    } else if (codeType === "bag") {
-      const formattedDate =
-        product.group === "PSC"
-          ? formatDateWithSlashes(expiryDate)
-          : formatDate(expiryDate);
-      expectedText = `${formattedDate} ${batchCodeText}`;
-    } else if (codeType === "carton") {
-      if (product.group === "PSC") {
-        const formattedDate = formatDateWithSlashes(expiryDate);
-        // Chỉ cần batch code và ngày để validate, bỏ qua time
-        expectedText = `${batchCodeText} ${formattedDate}`;
-      } else {
-        const formattedShortDate = formatDateShortYear(expiryDate);
-        expectedText = `${batchCodeText} HSD ${formattedShortDate}`;
+      // Regex: DD MM YY SuffixDD_prod
+      const regex = /(\d{2})\s(\d{2})\s(\d{2})\s([A-Z]\d{2})/;
+      const match = detectedText.match(regex);
+      if (match) {
+        extractedData = match[0];
+        // So sánh các phần đã trích xuất với giá trị mong đợi
+        const expectedParts = expectedText.split(" ");
+        isValid =
+          match[1] === expectedParts[0] && // Day
+          match[2] === expectedParts[1] && // Month
+          match[3] === expectedParts[2] && // Year
+          match[4] === expectedParts[3]; // Suffix + Prod Day
       }
-    }
-
-    // 4. So sánh và hiển thị kết quả
-    let isValid = false;
-    if (codeType === "bag") {
-      // Đối với 'bag', kiểm tra cả ngày và batch code, bỏ qua thời gian
+    } else if (codeType === "bag") {
       const expectedDate =
         product.group === "PSC"
           ? formatDateWithSlashes(expiryDate)
           : formatDate(expiryDate);
-      isValid =
-        detectedText.includes(expectedDate) &&
-        detectedText.includes(batchCodeText);
-    } else if (codeType === "stick") {
-      // Đối với 'stick', so sánh từng phần để linh hoạt hơn
-      const parts = expectedText.split(" ");
-      isValid = parts.every((part) => detectedText.includes(part));
-    } else if (codeType === "carton") {
-      // SỬA LỖI: Phân biệt logic validate cho PSC và các nhóm khác
-      if (product.group === "PSC") {
-        const expectedFullDate = formatDateWithSlashes(expiryDate); // Dùng DD/MM/YYYY
+      expectedText = `${expectedDate} ${batchCodeText}`;
+      // Regex: DD.MM.YYYY hoặc DD/MM/YYYY và BatchCode
+      const dateRegex =
+        product.group === "PSC"
+          ? /(\d{2}\/\d{2}\/\d{4})/
+          : /(\d{2}\.\d{2}\.\d{4})/;
+      const batchRegex = /(\d{8}[A-Z])/;
+      const dateMatch = detectedText.match(dateRegex);
+      const batchMatch = detectedText.match(batchRegex);
+
+      if (dateMatch && batchMatch) {
+        extractedData = `${dateMatch[0]} ${batchMatch[0]}`;
         isValid =
-          detectedText.includes(batchCodeText) &&
-          detectedText.includes(expectedFullDate);
-      } else {
-        const expectedShortDate = formatDateShortYear(expiryDate); // Dùng DD/MM/YY
-        isValid =
-          detectedText.includes(batchCodeText) &&
-          detectedText.includes(expectedShortDate);
+          dateMatch[0] === expectedDate && batchMatch[0] === batchCodeText;
       }
-    } else {
-      // Logic cũ cho các loại khác (kiểm tra phần đầu)
-      isValid = detectedText.includes(expectedText.split(" ")[0]);
+    } else if (codeType === "carton") {
+      if (product.group === "PSC") {
+        const expectedDate = formatDateWithSlashes(expiryDate);
+        expectedText = `${batchCodeText} ${expectedDate}`;
+        // Regex: BatchCode và DD/MM/YYYY
+        const batchRegex = /(\d{8}[A-Z])/;
+        const dateRegex = /(\d{2}\/\d{2}\/\d{4})/;
+        const batchMatch = detectedText.match(batchRegex);
+        const dateMatch = detectedText.match(dateRegex);
+        if (batchMatch && dateMatch) {
+          extractedData = `${batchMatch[0]} ${dateMatch[0]}`;
+          isValid =
+            batchMatch[0] === batchCodeText && dateMatch[0] === expectedDate;
+        }
+      } else {
+        const expectedDate = formatDateShortYear(expiryDate);
+        expectedText = `${batchCodeText} HSD ${expectedDate}`;
+        // Regex: BatchCode, "HSD", và DD/MM/YY
+        const batchRegex = /(\d{8}[A-Z])/;
+        const dateRegex = /(\d{2}\/\d{2}\/\d{2})/;
+        const batchMatch = detectedText.match(batchRegex);
+        const dateMatch = detectedText.match(dateRegex);
+        if (batchMatch && dateMatch && detectedText.includes("HSD")) {
+          extractedData = `${batchMatch[0]} HSD ${dateMatch[0]}`;
+          isValid =
+            batchMatch[0] === batchCodeText && dateMatch[0] === expectedDate;
+        }
+      }
     }
 
+    // 4. Hiển thị kết quả
     if (isValid) {
-      validationResult.innerHTML = `<strong>VALIDATION PASSED!</strong><br>Detected text matches the expected format.`;
+      validationResult.innerHTML = `<strong>VALIDATION PASSED!</strong><br>Extracted data: "${extractedData}"`;
       validationResult.className = "alert alert-success mt-3";
     } else {
       validationResult.innerHTML = `<strong>VALIDATION FAILED!</strong><br>Expected format: "${expectedText}"<br>Detected text: "${detectedText}"`;
@@ -726,6 +754,89 @@ async function captureAndValidate() {
     ocrStatus.className = "text-danger";
   }
 }
+
+/**
+ * Tính toán độ sắc nét của ảnh bằng thuật toán Laplacian.
+ * @param {ImageData} imageData - Dữ liệu ảnh từ canvas.
+ * @returns {number} - Giá trị variance, càng cao càng nét.
+ */
+function calculateSharpness(imageData) {
+  const { data, width, height } = imageData;
+  let laplacianSum = 0;
+  let laplacianMean = 0;
+  let varianceSum = 0;
+
+  // Chuyển sang ảnh xám và tính toán ma trận Laplacian
+  const gray = new Uint8Array(width * height);
+  for (let i = 0; i < data.length; i += 4) {
+    const grayscale =
+      data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    gray[i / 4] = grayscale;
+  }
+
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const center = gray[y * width + x];
+      const laplacian =
+        gray[y * width + (x - 1)] +
+        gray[y * width + (x + 1)] +
+        gray[(y - 1) * width + x] +
+        gray[(y + 1) * width + x] -
+        4 * center;
+      laplacianSum += laplacian;
+    }
+  }
+  laplacianMean = laplacianSum / (width * height);
+
+  // Tính variance
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const center = gray[y * width + x];
+      const laplacian =
+        gray[y * width + (x - 1)] +
+        gray[y * width + (x + 1)] +
+        gray[(y - 1) * width + x] +
+        gray[(y + 1) * width + x] -
+        4 * center;
+      varianceSum += Math.pow(laplacian - laplacianMean, 2);
+    }
+  }
+  return varianceSum / (width * height);
+}
+
+/**
+ * Bắt đầu quá trình tự động tìm khung hình tốt nhất để chụp.
+ */
+function startAutoCapture() {
+  const video = document.getElementById("videoElement");
+  const ocrStatus = document.getElementById("ocrStatus");
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const SHARPNESS_THRESHOLD = 50; // Ngưỡng độ nét, cần tinh chỉnh qua thực tế
+  let bestSharpness = 0;
+
+  ocrStatus.textContent = "Move camera to focus on the code...";
+
+  const analysisInterval = setInterval(() => {
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const sharpness = calculateSharpness(imageData);
+
+    // Cập nhật trạng thái để người dùng biết
+    ocrStatus.textContent = `Analyzing... Sharpness: ${sharpness.toFixed(2)}`;
+
+    if (sharpness > SHARPNESS_THRESHOLD) {
+      console.log(`Good frame found! Sharpness: ${sharpness}`);
+      clearInterval(analysisInterval); // Dừng phân tích
+      captureAndValidate(); // Chụp và validate ngay lập tức
+    }
+  }, 500); // Phân tích mỗi 500ms
+}
+
+// Bạn sẽ cần gọi `startAutoCapture()` sau khi video đã play thành công trong hàm `startCamera`.
 
 /**
  * Điền các lựa chọn Group duy nhất vào dropdown.
@@ -773,592 +884,4 @@ function populateProductSelector(selectedGroup) {
   });
 
   productSelect.disabled = false; // Kích hoạt dropdown
-}
-
-// Chạy khi toàn bộ DOM đã được tải
-document.addEventListener("DOMContentLoaded", function () {
-  // Cập nhật lần đầu khi tải trang
-  displayCurrentDateTime();
-  updateAllProductInfo();
-
-  // Điền các lựa chọn sản phẩm vào dropdown
-  populateGroupSelector();
-  populateProductSelector(); // Chạy lần đầu để hiển thị dropdown line bị vô hiệu hóa
-
-  // Thêm event listener cho dropdown Group
-  const groupSelect = document.getElementById("groupSelect");
-  if (groupSelect) {
-    groupSelect.addEventListener("change", (event) => {
-      populateProductSelector(event.target.value);
-    });
-  }
-
-  // Bắt đầu đồng hồ
-  setInterval(displayCurrentDateTime, 1000);
-
-  // Lên lịch cập nhật hàng ngày
-  scheduleDailyUpdate();
-
-  // Xử lý sự kiện cho công cụ tính toán
-  const batchInput = document.getElementById("batchInput");
-  const calcFromBatchBtn = document.getElementById("calcFromBatchBtn");
-  const expiryInput = document.getElementById("expiryInput");
-  const shelfLifeSelect = document.getElementById("shelfLifeSelect");
-  const calcFromExpiryBtn = document.getElementById("calcFromExpiryBtn");
-  const calcResult = document.getElementById("calcResult");
-
-  // Tính từ Batch Code
-  calcFromBatchBtn.addEventListener("click", () => {
-    const batchCode = batchInput.value.trim();
-    if (batchCode.length < 4) {
-      calcResult.textContent = "Lỗi: Batch code không hợp lệ.";
-      calcResult.className = "alert alert-danger mt-4";
-      calcResult.style.display = "block";
-      return;
-    }
-
-    const yearDigit = parseInt(batchCode[0], 10);
-    const julianDay = parseInt(batchCode.substring(1, 4), 10);
-
-    // Suy luận năm (giả định năm thuộc thập kỷ hiện tại hoặc trước đó)
-    const currentYear = new Date().getFullYear();
-    const currentDecade = Math.floor(currentYear / 10) * 10;
-    let productionYear = currentDecade + yearDigit;
-    if (productionYear > currentYear) {
-      productionYear -= 10;
-    }
-
-    const productionDate = julianToDate(productionYear, julianDay);
-    calcResult.innerHTML = `<strong>Ngày sản xuất tính từ Batch Code:</strong> ${formatDate(
-      productionDate
-    )}`;
-    calcResult.className = "alert alert-success mt-4";
-    calcResult.style.display = "block";
-  });
-
-  // Tính từ Hạn sử dụng
-  calcFromExpiryBtn.addEventListener("click", () => {
-    const expiryDateStr = expiryInput.value.trim();
-    const shelfLife = parseInt(shelfLifeSelect.value, 10);
-
-    const expiryDate = parseDateString(expiryDateStr);
-
-    if (!expiryDate) {
-      calcResult.textContent =
-        "Lỗi: Định dạng ngày hết hạn không hợp lệ. Vui lòng dùng DD.MM.YYYY.";
-      calcResult.className = "alert alert-danger mt-4";
-      calcResult.style.display = "block";
-      return;
-    }
-
-    const productionDate = subtractMonths(expiryDate, shelfLife);
-    calcResult.innerHTML = `<strong>Ngày sản xuất tính từ Hạn sử dụng:</strong> ${formatDate(
-      productionDate
-    )}`;
-    calcResult.className = "alert alert-success mt-4";
-    calcResult.style.display = "block";
-  });
-
-  // Xử lý sự kiện cho tính năng Validate bằng Camera
-  const startCameraBtn = document.getElementById("startCameraBtn");
-  const captureBtn = document.getElementById("captureBtn");
-
-  if (startCameraBtn) {
-    startCameraBtn.addEventListener("click", startCamera);
-  }
-  if (captureBtn) {
-    captureBtn.addEventListener("click", captureAndValidate);
-  }
-
-  // Tối ưu hóa hiệu suất (lazy loading, debouncing)
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("loaded");
-        observer.unobserve(entry.target);
-      }
-    });
-  });
-
-  document.querySelectorAll(".lazy-load").forEach((element) => {
-    observer.observe(element);
-  });
-});
-
-// =================================================================================
-// KHU VỰC VALIDATE BẰNG CAMERA (CAMERA VALIDATION)
-// =================================================================================
-
-/**
- * Khởi động camera và hiển thị video feed.
- */
-async function startCamera() {
-  const video = document.getElementById("videoElement");
-  const cameraFeed = document.getElementById("cameraFeed");
-  const startBtn = document.getElementById("startCameraBtn");
-  const ocrStatus = document.getElementById("ocrStatus");
-
-  cameraFeed.style.display = "block";
-  startBtn.style.display = "none";
-  ocrStatus.textContent = "Starting camera...";
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" }, // Ưu tiên camera sau
-    });
-    video.srcObject = stream;
-    video.onloadedmetadata = () => {
-      video.play();
-      ocrStatus.textContent = "Camera ready. Position the code and capture.";
-    };
-  } catch (err) {
-    console.error("Error accessing camera: ", err);
-    ocrStatus.textContent =
-      "Error: Could not access camera. Please check permissions.";
-    ocrStatus.className = "text-danger";
-  }
-}
-
-/**
- * Chụp ảnh từ video, nhận dạng văn bản và xác thực.
- */
-async function captureAndValidate() {
-  const video = document.getElementById("videoElement");
-  const ocrStatus = document.getElementById("ocrStatus");
-  const validationResult = document.getElementById("validationResult");
-  const codeType = document.getElementById("codeTypeSelect").value;
-  const productIndex = document.getElementById("productSelect").value; // Lấy index của sản phẩm được chọn
-
-  ocrStatus.textContent = "Processing image... Please wait.";
-  validationResult.style.display = "none";
-
-  // 1. Chụp ảnh từ video vào canvas
-  const canvas = document.createElement("canvas");
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const context = canvas.getContext("2d");
-  context.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const imageDataUrl = canvas.toDataURL("image/png");
-
-  // 2. Sử dụng Tesseract.js để nhận dạng văn bản
-  try {
-    // Thêm whitelist để cải thiện độ chính xác
-    const whitelist = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ ./:";
-
-    const {
-      data: { text },
-    } = await Tesseract.recognize(imageDataUrl, "eng", {
-      tessedit_char_whitelist: whitelist, // Thêm tùy chọn whitelist
-      logger: (m) => {
-        ocrStatus.textContent = `${m.status} (${Math.round(
-          m.progress * 100
-        )}%)`;
-      },
-    });
-
-    // Xử lý văn bản nhận dạng được để chuẩn hóa
-    const detectedText = text
-      .trim()
-      .replace(/\s+/g, " ") // Chuẩn hóa khoảng trắng
-      .replace(/(\d)\s(\d)/g, "$1$2"); // Gộp các số bị tách ra, ví dụ "B 1 4" -> "B14"
-
-    ocrStatus.textContent = `Detected Text: "${detectedText}"`;
-
-    // 3. Lấy định dạng đúng để so sánh DỰA TRÊN SẢN PHẨM ĐƯỢC CHỌN
-    const today = new Date();
-    // Lấy đúng sản phẩm từ mảng products dựa trên lựa chọn của người dùng
-    const product = products[productIndex];
-    if (!product) {
-      ocrStatus.textContent = "Error: Invalid product selected.";
-      return;
-    }
-
-    const expiryDate = addMonths(today, product.shelfLife);
-    const batchCodeText = formatBatchCode(today, product.batchSuffix);
-    let expectedText = "";
-
-    // Tạo chuỗi định dạng mong đợi dựa trên lựa chọn
-    if (codeType === "stick") {
-      expectedText = formatCustomExpiry(expiryDate, today, product.batchSuffix);
-    } else if (codeType === "bag") {
-      const formattedDate =
-        product.group === "PSC"
-          ? formatDateWithSlashes(expiryDate)
-          : formatDate(expiryDate);
-      expectedText = `${formattedDate} ${batchCodeText}`;
-    } else if (codeType === "carton") {
-      if (product.group === "PSC") {
-        const formattedDate = formatDateWithSlashes(expiryDate);
-        // Chỉ cần batch code và ngày để validate, bỏ qua time
-        expectedText = `${batchCodeText} ${formattedDate}`;
-      } else {
-        const formattedShortDate = formatDateShortYear(expiryDate);
-        expectedText = `${batchCodeText} HSD ${formattedShortDate}`;
-      }
-    }
-
-    // 4. So sánh và hiển thị kết quả
-    let isValid = false;
-    if (codeType === "bag") {
-      // Đối với 'bag', kiểm tra cả ngày và batch code, bỏ qua thời gian
-      const expectedDate =
-        product.group === "PSC"
-          ? formatDateWithSlashes(expiryDate)
-          : formatDate(expiryDate);
-      isValid =
-        detectedText.includes(expectedDate) &&
-        detectedText.includes(batchCodeText);
-    } else if (codeType === "stick") {
-      // Đối với 'stick', so sánh từng phần để linh hoạt hơn
-      const parts = expectedText.split(" ");
-      isValid = parts.every((part) => detectedText.includes(part));
-    } else if (codeType === "carton") {
-      // SỬA LỖI: Phân biệt logic validate cho PSC và các nhóm khác
-      if (product.group === "PSC") {
-        const expectedFullDate = formatDateWithSlashes(expiryDate); // Dùng DD/MM/YYYY
-        isValid =
-          detectedText.includes(batchCodeText) &&
-          detectedText.includes(expectedFullDate);
-      } else {
-        const expectedShortDate = formatDateShortYear(expiryDate); // Dùng DD/MM/YY
-        isValid =
-          detectedText.includes(batchCodeText) &&
-          detectedText.includes(expectedShortDate);
-      }
-    } else {
-      // Logic cũ cho các loại khác (kiểm tra phần đầu)
-      isValid = detectedText.includes(expectedText.split(" ")[0]);
-    }
-
-    if (isValid) {
-      validationResult.innerHTML = `<strong>VALIDATION PASSED!</strong><br>Detected text matches the expected format.`;
-      validationResult.className = "alert alert-success mt-3";
-    } else {
-      validationResult.innerHTML = `<strong>VALIDATION FAILED!</strong><br>Expected format: "${expectedText}"<br>Detected text: "${detectedText}"`;
-      validationResult.className = "alert alert-danger mt-3";
-    }
-    validationResult.style.display = "block";
-  } catch (error) {
-    console.error("OCR Error:", error);
-    ocrStatus.textContent = "An error occurred during text recognition.";
-    ocrStatus.className = "text-danger";
-  }
-}
-
-/**
- * Điền các lựa chọn Group duy nhất vào dropdown.
- */
-function populateGroupSelector() {
-  const groupSelect = document.getElementById("groupSelect");
-  if (!groupSelect) return;
-
-  // Lấy các group duy nhất từ mảng products
-  const groups = [...new Set(products.map((p) => p.group))];
-
-  groupSelect.innerHTML = '<option value="">-- Select Group --</option>'; // Thêm lựa chọn mặc định
-  groups.forEach((group) => {
-    const option = document.createElement("option");
-    option.value = group;
-    option.textContent = group;
-    groupSelect.appendChild(option);
-  });
-}
-
-/**
- * Điền các lựa chọn sản phẩm vào dropdown dựa trên group đã chọn.
- * @param {string} selectedGroup - Group đã được chọn.
- */
-function populateProductSelector(selectedGroup) {
-  const productSelect = document.getElementById("productSelect");
-  if (!productSelect) return;
-
-  productSelect.innerHTML = ""; // Xóa các lựa chọn cũ
-  productSelect.disabled = true;
-
-  if (!selectedGroup) {
-    productSelect.innerHTML = '<option value="">-- Select Line --</option>';
-    return;
-  }
-
-  // Lọc các sản phẩm thuộc group đã chọn
-  products.forEach((product, index) => {
-    if (product.group === selectedGroup) {
-      const option = document.createElement("option");
-      option.value = index; // Vẫn sử dụng index làm value
-      option.textContent = `${product.productionLine} (${product.shelfLife}m)`;
-      productSelect.appendChild(option);
-    }
-  });
-
-  productSelect.disabled = false; // Kích hoạt dropdown
-}
-
-// Chạy khi toàn bộ DOM đã được tải
-document.addEventListener("DOMContentLoaded", function () {
-  // Cập nhật lần đầu khi tải trang
-  displayCurrentDateTime();
-  updateAllProductInfo();
-
-  // Điền các lựa chọn sản phẩm vào dropdown
-  populateGroupSelector();
-  populateProductSelector(); // Chạy lần đầu để hiển thị dropdown line bị vô hiệu hóa
-
-  // Thêm event listener cho dropdown Group
-  const groupSelect = document.getElementById("groupSelect");
-  if (groupSelect) {
-    groupSelect.addEventListener("change", (event) => {
-      populateProductSelector(event.target.value);
-    });
-  }
-
-  // Bắt đầu đồng hồ
-  setInterval(displayCurrentDateTime, 1000);
-
-  // Lên lịch cập nhật hàng ngày
-  scheduleDailyUpdate();
-
-  // Xử lý sự kiện cho công cụ tính toán
-  const batchInput = document.getElementById("batchInput");
-  const calcFromBatchBtn = document.getElementById("calcFromBatchBtn");
-  const expiryInput = document.getElementById("expiryInput");
-  const shelfLifeSelect = document.getElementById("shelfLifeSelect");
-  const calcFromExpiryBtn = document.getElementById("calcFromExpiryBtn");
-  const calcResult = document.getElementById("calcResult");
-
-  // Tính từ Batch Code
-  calcFromBatchBtn.addEventListener("click", () => {
-    const batchCode = batchInput.value.trim();
-    if (batchCode.length < 4) {
-      calcResult.textContent = "Lỗi: Batch code không hợp lệ.";
-      calcResult.className = "alert alert-danger mt-4";
-      calcResult.style.display = "block";
-      return;
-    }
-
-    const yearDigit = parseInt(batchCode[0], 10);
-    const julianDay = parseInt(batchCode.substring(1, 4), 10);
-
-    // Suy luận năm (giả định năm thuộc thập kỷ hiện tại hoặc trước đó)
-    const currentYear = new Date().getFullYear();
-    const currentDecade = Math.floor(currentYear / 10) * 10;
-    let productionYear = currentDecade + yearDigit;
-    if (productionYear > currentYear) {
-      productionYear -= 10;
-    }
-
-    const productionDate = julianToDate(productionYear, julianDay);
-    calcResult.innerHTML = `<strong>Ngày sản xuất tính từ Batch Code:</strong> ${formatDate(
-      productionDate
-    )}`;
-    calcResult.className = "alert alert-success mt-4";
-    calcResult.style.display = "block";
-  });
-
-  // Tính từ Hạn sử dụng
-  calcFromExpiryBtn.addEventListener("click", () => {
-    const expiryDateStr = expiryInput.value.trim();
-    const shelfLife = parseInt(shelfLifeSelect.value, 10);
-
-    const expiryDate = parseDateString(expiryDateStr);
-
-    if (!expiryDate) {
-      calcResult.textContent =
-        "Lỗi: Định dạng ngày hết hạn không hợp lệ. Vui lòng dùng DD.MM.YYYY.";
-      calcResult.className = "alert alert-danger mt-4";
-      calcResult.style.display = "block";
-      return;
-    }
-
-    const productionDate = subtractMonths(expiryDate, shelfLife);
-    calcResult.innerHTML = `<strong>Ngày sản xuất tính từ Hạn sử dụng:</strong> ${formatDate(
-      productionDate
-    )}`;
-    calcResult.className = "alert alert-success mt-4";
-    calcResult.style.display = "block";
-  });
-
-  // Xử lý sự kiện cho tính năng Validate bằng Camera
-  const startCameraBtn = document.getElementById("startCameraBtn");
-  const captureBtn = document.getElementById("captureBtn");
-
-  if (startCameraBtn) {
-    startCameraBtn.addEventListener("click", startCamera);
-  }
-  if (captureBtn) {
-    captureBtn.addEventListener("click", captureAndValidate);
-  }
-
-  // Tối ưu hóa hiệu suất (lazy loading, debouncing)
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("loaded");
-        observer.unobserve(entry.target);
-      }
-    });
-  });
-
-  document.querySelectorAll(".lazy-load").forEach((element) => {
-    observer.observe(element);
-  });
-});
-
-// =================================================================================
-// KHU VỰC VALIDATE BẰNG CAMERA (CAMERA VALIDATION)
-// =================================================================================
-
-/**
- * Khởi động camera và hiển thị video feed.
- */
-async function startCamera() {
-  const video = document.getElementById("videoElement");
-  const cameraFeed = document.getElementById("cameraFeed");
-  const startBtn = document.getElementById("startCameraBtn");
-  const ocrStatus = document.getElementById("ocrStatus");
-
-  cameraFeed.style.display = "block";
-  startBtn.style.display = "none";
-  ocrStatus.textContent = "Starting camera...";
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" }, // Ưu tiên camera sau
-    });
-    video.srcObject = stream;
-    video.onloadedmetadata = () => {
-      video.play();
-      ocrStatus.textContent = "Camera ready. Position the code and capture.";
-    };
-  } catch (err) {
-    console.error("Error accessing camera: ", err);
-    ocrStatus.textContent =
-      "Error: Could not access camera. Please check permissions.";
-    ocrStatus.className = "text-danger";
-  }
-}
-
-/**
- * Chụp ảnh từ video, nhận dạng văn bản và xác thực.
- */
-async function captureAndValidate() {
-  const video = document.getElementById("videoElement");
-  const ocrStatus = document.getElementById("ocrStatus");
-  const validationResult = document.getElementById("validationResult");
-  const codeType = document.getElementById("codeTypeSelect").value;
-  const productIndex = document.getElementById("productSelect").value; // Lấy index của sản phẩm được chọn
-
-  ocrStatus.textContent = "Processing image... Please wait.";
-  validationResult.style.display = "none";
-
-  // 1. Chụp ảnh từ video vào canvas
-  const canvas = document.createElement("canvas");
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const context = canvas.getContext("2d");
-  context.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const imageDataUrl = canvas.toDataURL("image/png");
-
-  // 2. Sử dụng Tesseract.js để nhận dạng văn bản
-  try {
-    // Thêm whitelist để cải thiện độ chính xác
-    const whitelist = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ ./:";
-
-    const {
-      data: { text },
-    } = await Tesseract.recognize(imageDataUrl, "eng", {
-      tessedit_char_whitelist: whitelist, // Thêm tùy chọn whitelist
-      logger: (m) => {
-        ocrStatus.textContent = `${m.status} (${Math.round(
-          m.progress * 100
-        )}%)`;
-      },
-    });
-
-    // Xử lý văn bản nhận dạng được để chuẩn hóa
-    const detectedText = text
-      .trim()
-      .replace(/\s+/g, " ") // Chuẩn hóa khoảng trắng
-      .replace(/(\d)\s(\d)/g, "$1$2"); // Gộp các số bị tách ra, ví dụ "B 1 4" -> "B14"
-
-    ocrStatus.textContent = `Detected Text: "${detectedText}"`;
-
-    // 3. Lấy định dạng đúng để so sánh DỰA TRÊN SẢN PHẨM ĐƯỢC CHỌN
-    const today = new Date();
-    // Lấy đúng sản phẩm từ mảng products dựa trên lựa chọn của người dùng
-    const product = products[productIndex];
-    if (!product) {
-      ocrStatus.textContent = "Error: Invalid product selected.";
-      return;
-    }
-
-    const expiryDate = addMonths(today, product.shelfLife);
-    const batchCodeText = formatBatchCode(today, product.batchSuffix);
-    let expectedText = "";
-
-    // Tạo chuỗi định dạng mong đợi dựa trên lựa chọn
-    if (codeType === "stick") {
-      expectedText = formatCustomExpiry(expiryDate, today, product.batchSuffix);
-    } else if (codeType === "bag") {
-      const formattedDate =
-        product.group === "PSC"
-          ? formatDateWithSlashes(expiryDate)
-          : formatDate(expiryDate);
-      expectedText = `${formattedDate} ${batchCodeText}`;
-    } else if (codeType === "carton") {
-      if (product.group === "PSC") {
-        const formattedDate = formatDateWithSlashes(expiryDate);
-        // Chỉ cần batch code và ngày để validate, bỏ qua time
-        expectedText = `${batchCodeText} ${formattedDate}`;
-      } else {
-        const formattedShortDate = formatDateShortYear(expiryDate);
-        expectedText = `${batchCodeText} HSD ${formattedShortDate}`;
-      }
-    }
-
-    // 4. So sánh và hiển thị kết quả
-    let isValid = false;
-    if (codeType === "bag") {
-      // Đối với 'bag', kiểm tra cả ngày và batch code, bỏ qua thời gian
-      const expectedDate =
-        product.group === "PSC"
-          ? formatDateWithSlashes(expiryDate)
-          : formatDate(expiryDate);
-      isValid =
-        detectedText.includes(expectedDate) &&
-        detectedText.includes(batchCodeText);
-    } else if (codeType === "stick") {
-      // Đối với 'stick', so sánh từng phần để linh hoạt hơn
-      const parts = expectedText.split(" ");
-      isValid = parts.every((part) => detectedText.includes(part));
-    } else if (codeType === "carton") {
-      // SỬA LỖI: Phân biệt logic validate cho PSC và các nhóm khác
-      if (product.group === "PSC") {
-        const expectedFullDate = formatDateWithSlashes(expiryDate); // Dùng DD/MM/YYYY
-        isValid =
-          detectedText.includes(batchCodeText) &&
-          detectedText.includes(expectedFullDate);
-      } else {
-        const expectedShortDate = formatDateShortYear(expiryDate); // Dùng DD/MM/YY
-        isValid =
-          detectedText.includes(batchCodeText) &&
-          detectedText.includes(expectedShortDate);
-      }
-    } else {
-      // Logic cũ cho các loại khác (kiểm tra phần đầu)
-      isValid = detectedText.includes(expectedText.split(" ")[0]);
-    }
-
-    if (isValid) {
-      validationResult.innerHTML = `<strong>VALIDATION PASSED!</strong><br>Detected text matches the expected format.`;
-      validationResult.className = "alert alert-success mt-3";
-    } else {
-      validationResult.innerHTML = `<strong>VALIDATION FAILED!</strong><br>Expected format: "${expectedText}"<br>Detected text: "${detectedText}"`;
-      validationResult.className = "alert alert-danger mt-3";
-    }
-    validationResult.style.display = "block";
-  } catch (error) {
-    console.error("OCR Error:", error);
-    ocrStatus.textContent = "An error occurred during text recognition.";
-    ocrStatus.className = "text-danger";
-  }
 }
