@@ -1,82 +1,61 @@
-# Julian Date & Batch Code Validator
+# Julian Date And Batch Code Display
 
-## Giới thiệu
+Công cụ web hỗ trợ tính toán và hiển thị Batch Code, ngày sản xuất (NSX), và hạn sử dụng (HSD) cho các dây chuyền sản xuất tại nhà máy. Ứng dụng cũng tích hợp tính năng xác thực mã code bằng camera của thiết bị di động.
 
-**Julian Date & Batch Code Validator** là một ứng dụng web chuyên dụng được thiết kế để hỗ trợ các hoạt động trong môi trường sản xuất. Công cụ này cung cấp một giao diện tập trung để hiển thị, tính toán và xác thực mã lô (batch code) và ngày hết hạn (expiration date) cho nhiều dây chuyền sản xuất khác nhau, dựa trên ngày Julian và các quy tắc định dạng riêng biệt.
+## Tính Năng Nổi Bật
 
-Ứng dụng được xây dựng với mục tiêu tối ưu hóa quy trình kiểm tra chất lượng, giảm thiểu sai sót do con người và cung cấp thông tin sản xuất một cách nhanh chóng, chính xác.
-
----
-
-## Các tính năng chính
-
-### 1. Bảng điều khiển (Dashboard) trực quan
-
-- **Thông tin thời gian thực:** Hiển thị ngày & giờ hiện tại, và tự động tính toán **ngày Julian** tương ứng (ngày thứ mấy trong năm).
-- **Mã lô mẫu:** Cung cấp một ví dụ về định dạng mã lô (batch code) của ngày hiện tại.
-- **Bảng HSD nhanh:** Một bảng tóm tắt các ngày hết hạn tương ứng với các hạn sử dụng phổ biến (9, 10, 12, 15 tháng...), giúp người dùng tham khảo nhanh mà không cần tính toán.
-
-### 2. Bảng thông tin sản xuất chi tiết
-
-- **Tự động cập nhật:** Toàn bộ thông tin trên bảng được tính toán và cập nhật tự động hàng ngày vào lúc nửa đêm.
-- **Hiển thị đa định dạng:** Đối với mỗi dây chuyền sản xuất, ứng dụng hiển thị:
-  - **Mã Lô (Batch Code):** Được tạo theo công thức `[Số cuối của năm][Ngày Julian][Mã nhà máy][Hậu tố]`.
-  - **Ngày hết hạn (Expiry Date):** Được hiển thị theo nhiều định dạng khác nhau để phù hợp với từng loại bao bì:
-    - **Stick:** `DD MM YY [Hậu tố][Ngày sản xuất]` (ví dụ: `15 01 27 L15`)
-    - **Bag:** `DD.MM.YYYY` hoặc `DD/MM/YYYY` tùy theo nhóm sản phẩm.
-    - **Carton:** `[Mã Lô] HSD DD/MM/YY` hoặc `[Mã Lô] DD/MM/YYYY [Thời gian]` tùy nhóm sản phẩm.
-
-### 3. Công cụ tính toán sản xuất
-
-Đây là một tiện ích hai chiều mạnh mẽ giúp truy ngược thông tin sản xuất.
-
-- **Tính từ Mã Lô (Batch Code):**
-  - Người dùng nhập một mã lô bất kỳ.
-  - Ứng dụng sẽ phân tích mã, trích xuất năm sản xuất và ngày Julian để tìm ra **ngày sản xuất** chính xác.
-- **Tính từ Hạn sử dụng (Expiry Date):**
-  - Người dùng nhập ngày hết hạn (theo định dạng `DD.MM.YYYY`) và chọn hạn sử dụng tương ứng.
-  - Ứng dụng sẽ tính ngược lại để tìm ra **ngày sản xuất** của lô hàng đó.
-
-### 4. Xác thực Mã bằng Camera (OCR)
-
-Đây là tính năng nâng cao và hữu ích nhất của dự án, cho phép xác thực mã in trên sản phẩm thực tế.
-
-- **Sử dụng Camera sau:** Ứng dụng ưu tiên sử dụng camera sau của thiết bị (`facingMode: "environment"`) để quét mã.
-- **Tiền xử lý ảnh thông minh:**
-  - **Grayscale (Thang độ xám):** Chuyển đổi hình ảnh màu sang ảnh xám để loại bỏ nhiễu màu từ bao bì.
-  - **Thresholding (Nhị phân hóa):** Chuyển ảnh xám thành ảnh đen trắng. Kỹ thuật này cực kỳ hiệu quả trong việc **loại bỏ các vùng bị lóa sáng (glare)** và các chi tiết nền không mong muốn, giúp ký tự trở nên rõ nét.
-- **Cấu hình Tesseract.js chuyên dụng:**
-  - **Whitelist:** Giới hạn các ký tự mà Tesseract được phép nhận dạng (`0123456789/:.HSD...`). Điều này ngăn AI "đoán" ra các ký tự không liên quan, tăng độ chính xác.
-  - **Page Segmentation Mode (PSM):** Sử dụng chế độ `PSM 6`, báo cho Tesseract rằng nó đang xử lý một khối văn bản duy nhất, rất phù hợp với định dạng mã in phun.
-- **Xác thực bằng Regex (Biểu thức chính quy):**
-  - Thay vì so sánh chuỗi một cách tuyệt đối, ứng dụng sử dụng Regex để **trích xuất** các mẫu dữ liệu (ngày tháng, mã lô) từ chuỗi văn bản lộn xộn mà OCR trả về.
-  - Chỉ khi trích xuất thành công và dữ liệu khớp với giá trị mong đợi, kết quả mới được tính là **HỢP LỆ (PASSED)**.
+- **Hiển thị Thông tin Tự động:** Tự động tính toán và hiển thị Batch Code và HSD cho tất cả các dây chuyền dựa trên ngày hiện tại.
+- **Bảng tra cứu nhanh:** Cung cấp các bảng thông tin riêng biệt cho khu vực **Packing Line** và **Filling Machine**.
+- **Công cụ Tính toán Ngược:** Cho phép người dùng tính NSX từ Batch Code hoặc HSD.
+- **Xác thực bằng Camera (OCR):** Sử dụng camera của thiết bị để đọc và xác thực mã code (Stick, Bag, Carton) so với dữ liệu hệ thống.
 
 ---
 
-## Cấu trúc và Khả năng mở rộng
+## Quy Trình Tối Ưu Hóa OCR Nâng Cao
 
-Dự án được thiết kế với khả năng mở rộng cao. Toàn bộ thông tin về các dây chuyền sản xuất được quản lý tập trung trong mảng `products` ở đầu tệp `script.js`.
+Để giải quyết các thách thức khi nhận dạng ký tự trong môi trường công nghiệp (nhiễu, rung, lóa, nền màu đa dạng), tính năng xác thực bằng camera đã được nâng cấp với một quy trình xử lý ảnh chuyên sâu, ưu tiên độ chính xác tuyệt đối.
 
-Để **thêm, sửa hoặc xóa một sản phẩm/dây chuyền**, bạn chỉ cần chỉnh sửa các đối tượng trong mảng này mà không cần can thiệp vào logic phức tạp của ứng dụng.
+Quy trình xử lý mỗi khi người dùng nhấn nút "Capture" bao gồm 6 bước:
 
-```javascript
-// Ví dụ về cấu trúc một sản phẩm
-{
-  group: "2IN1", // Nhóm sản phẩm
-  productionLine: "SANKO 14", // Tên dây chuyền
-  shelfLife: 12, // Hạn sử dụng (tháng)
-  batchSuffix: "X", // Ký tự hậu tố cho mã lô
-  // ... các ID của element trong HTML để cập nhật giao diện
-}
-```
+### Bước 1: Định vị Thủ công (User-Guided Framing)
 
----
+- Người dùng sử dụng một "khung ngắm" (viewfinder) hình chữ nhật trên màn hình để căn chỉnh và đưa dòng mã code vào vùng lấy nét của camera.
+- **Mục tiêu:** Đảm bảo ảnh đầu vào có chất lượng tốt nhất, giảm mờ và out-net.
 
-## Công nghệ sử dụng
+### Bước 2: Cắt ảnh Lần 1 (Physical Crop)
 
-- **HTML5**
-- **CSS3** (với sự hỗ trợ của **Bootstrap 4.5** cho giao diện responsive)
-- **JavaScript (ES6+)**
-- **Tesseract.js:** Thư viện OCR để nhận dạng ký tự từ hình ảnh.
-- **Font Awesome:** Cho các biểu tượng (icons).
+- Hệ thống chụp lại toàn bộ khung hình từ camera.
+- Dựa vào vị trí của khung ngắm, một vùng ảnh chữ nhật được cắt ra.
+- **Mục tiêu:** Loại bỏ phần lớn các chi tiết thừa bên ngoài vùng quan tâm.
+
+### Bước 3: Tiền xử lý Ảnh (Advanced Pre-processing)
+
+Ảnh sau khi cắt lần 1 sẽ được xử lý qua các bộ lọc để chuẩn hóa:
+
+1.  **Tăng độ tương phản (Contrast Enhancement):** Làm nổi bật các chấm mực in so với màu nền của bao bì.
+2.  **Nhị phân hóa (Binarization):** Chuyển ảnh sang dạng đen-trắng hoàn toàn. Bước này loại bỏ yếu tố màu sắc, giúp thuật toán hoạt động ổn định trên mọi loại nền (đỏ, xanh, đen, trắng...).
+
+### Bước 4: Tự động Cắt ảnh Lần 2 (Intelligent Auto-Cropping)
+
+Đây là bước tối ưu hóa quan trọng nhất để đạt độ chính xác cao.
+
+1.  Hệ thống phân tích ảnh đen-trắng từ Bước 3 để tìm tất cả các "khối" pixel đen liền kề nhau (thuật toán Connected-component).
+2.  Nó xác định khối lớn nhất, đây được giả định là dòng văn bản cần đọc.
+3.  Một hình chữ nhật bao quanh chính xác khối văn bản này (`bounding box`) được tạo ra.
+4.  Hệ thống thực hiện **cắt ảnh lần thứ hai**, chỉ giữ lại vùng ảnh bên trong `bounding box` này (có thêm một chút đệm để tránh mất ký tự).
+
+- **Mục tiêu:** Tạo ra một bức ảnh cuối cùng **siêu sạch**, chỉ chứa duy nhất dòng văn bản trên nền trắng, loại bỏ 100% các khoảng trống, nhiễu và artwork còn sót lại sau lần cắt đầu tiên.
+
+### Bước 5: Nhận dạng Ký tự (Optimized OCR Recognition)
+
+- Bức ảnh siêu sạch từ Bước 4 được gửi đến Tesseract.js.
+- **Cấu hình tối ưu được áp dụng:**
+  - `PSM 7 (Single Line)`: "Ra lệnh" cho AI chỉ tìm kiếm một dòng văn bản duy nhất.
+  - `Whitelist`: Cung cấp một danh sách các ký tự hợp lệ (`0-9`, `A-Z`, `/`, `.`, `:`...) để ngăn Tesseract đoán sai ra các ký tự không liên quan.
+
+### Bước 6: Xác thực Kết quả (Flexible Validation)
+
+- Chuỗi văn bản do OCR trả về được so sánh với dữ liệu mong đợi của hệ thống.
+- Logic so sánh sử dụng Biểu thức chính quy (Regex) linh hoạt, có khả năng bỏ qua các lỗi nhỏ như khoảng trắng thừa hoặc ký tự nhiễu không mong muốn.
+
+**Kết quả:** Quy trình xử lý đa bước này đảm bảo Tesseract nhận được dữ liệu đầu vào lý tưởng nhất, giúp tăng vọt độ chính xác nhận dạng ngay cả trong các điều kiện khó khăn nhất.

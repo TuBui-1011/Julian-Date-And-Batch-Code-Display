@@ -181,19 +181,35 @@ body {
 
 #cameraFeed {
   position: relative;
-  background-color: #000;
+  display: none; /* Ẩn ban đầu */
+  max-width: 100%;
+  margin: 1rem auto;
+  border: 1px solid #ddd;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: hidden; /* Đảm bảo video không tràn ra ngoài */
+}
+
+#videoElement {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 #viewfinder {
   position: absolute;
+  /* Canh giữa khung ngắm */
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 80%; /* Chiều rộng của vùng quan tâm */
-  height: 30%; /* Chiều cao của vùng quan tâm */
-  border: 2px solid rgba(255, 0, 0, 0.7); /* Màu đỏ để nổi bật */
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); /* Làm mờ vùng xung quanh */
+  /* Kích thước mới: hình chữ nhật hẹp, dài */
+  width: 80%;
+  height: 20%;
+  border: 3px solid rgba(255, 0, 0, 0.7);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6); /* Làm mờ vùng xung quanh */
   border-radius: 8px;
+}
+
+#ocrStatus {
+  font-style: italic;
+  color: #6c757d;
 }
