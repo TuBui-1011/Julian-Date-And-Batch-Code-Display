@@ -1107,35 +1107,42 @@ async function captureAndValidate() {
     // Áp dụng kịch bản tiền xử lý
     scenario.process(tempContext, tempCanvas.width, tempCanvas.height);
 
+    let finalCanvas = tempCanvas; // Mặc định dùng canvas đã xử lý
+
     // Tự động cắt vùng văn bản sau khi tiền xử lý
     const boundingBox = findTextBoundingBox(
       tempContext.getImageData(0, 0, tempCanvas.width, tempCanvas.height),
     );
 
-    if (!boundingBox || boundingBox.width < 10 || boundingBox.height < 5) {
-      console.log(`Scenario ${scenario.name}: No significant text box found.`);
-      continue; // Thử kịch bản tiếp theo
+    // CHỈ CẮT NẾU TÌM THẤY BOUNDING BOX HỢP LÝ
+    if (boundingBox && boundingBox.width > 10 && boundingBox.height > 5) {
+      console.log(`Scenario ${scenario.name}: Found text box, cropping...`);
+      // Tạo canvas cuối cùng chỉ chứa vùng văn bản
+      const croppedCanvas = document.createElement("canvas");
+      const croppedContext = croppedCanvas.getContext("2d");
+      const padding = 15; // Tăng padding để tránh cắt sát ký tự
+      croppedCanvas.width = boundingBox.width + padding * 2;
+      croppedCanvas.height = boundingBox.height + padding * 2;
+      croppedContext.fillStyle = "white";
+      croppedContext.fillRect(0, 0, croppedCanvas.width, croppedCanvas.height);
+      croppedContext.drawImage(
+        tempCanvas,
+        boundingBox.x,
+        boundingBox.y,
+        boundingBox.width,
+        boundingBox.height,
+        padding,
+        padding,
+        boundingBox.width,
+        boundingBox.height,
+      );
+      finalCanvas = croppedCanvas; // Dùng canvas đã được cắt
+    } else {
+      console.log(
+        `Scenario ${scenario.name}: No significant text box found. Using full preprocessed image.`,
+      );
+      // Nếu không tìm thấy, vẫn tiếp tục với ảnh đã xử lý toàn bộ
     }
-
-    // Tạo canvas cuối cùng chỉ chứa vùng văn bản
-    const finalCanvas = document.createElement("canvas");
-    const finalContext = finalCanvas.getContext("2d");
-    const padding = 10;
-    finalCanvas.width = boundingBox.width + padding * 2;
-    finalCanvas.height = boundingBox.height + padding * 2;
-    finalContext.fillStyle = "white";
-    finalContext.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-    finalContext.drawImage(
-      tempCanvas,
-      boundingBox.x,
-      boundingBox.y,
-      boundingBox.width,
-      boundingBox.height,
-      padding,
-      padding,
-      boundingBox.width,
-      boundingBox.height,
-    );
 
     const processedImageDataUrl = finalCanvas.toDataURL("image/png");
 
