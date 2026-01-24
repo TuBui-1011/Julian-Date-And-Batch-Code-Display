@@ -1046,6 +1046,7 @@ async function captureAndValidate() {
   const viewfinder = document.getElementById("viewfinder");
   const ocrStatus = document.getElementById("ocrStatus");
   const validationResult = document.getElementById("validationResult");
+  const printTypeSelect = document.getElementById("printTypeSelect");
 
   ocrStatus.textContent = "Capturing & processing image...";
   validationResult.style.display = "none";
@@ -1082,18 +1083,38 @@ async function captureAndValidate() {
     cropHeight,
   );
 
-  // --- BƯỚC 2: THỬ TUẦN TỰ CÁC KỊCH BẢN XỬ LÝ ẢNH ---
-  const scenarios = [
-    { name: "Default (Solid)", process: preprocessScenario_Default },
-    { name: "High Contrast (Laser)", process: preprocessScenario_HighContrast },
-    { name: "Dilation (Inkjet)", process: preprocessScenario_Dilation },
-  ];
+  // --- BƯỚC 2: XÁC ĐỊNH KỊCH BẢN CẦN CHẠY ---
+  const allScenarios = {
+    solid: { name: "Default (Solid)", process: preprocessScenario_Default },
+    laser: {
+      name: "High Contrast (Laser)",
+      process: preprocessScenario_HighContrast,
+    },
+    inkjet: { name: "Dilation (Inkjet)", process: preprocessScenario_Dilation },
+  };
+
+  let scenariosToRun = [];
+  const selectedPrintType = printTypeSelect.value;
+
+  if (selectedPrintType === "auto") {
+    // Chạy tất cả các kịch bản nếu chọn Auto-Detect
+    scenariosToRun = [
+      allScenarios.solid,
+      allScenarios.laser,
+      allScenarios.inkjet,
+    ];
+  } else if (allScenarios[selectedPrintType]) {
+    // Chỉ chạy kịch bản đã chọn
+    scenariosToRun.push(allScenarios[selectedPrintType]);
+  }
 
   let ocrResultText = "";
 
-  for (let i = 0; i < scenarios.length; i++) {
-    const scenario = scenarios[i];
-    ocrStatus.textContent = `Analyzing with Scenario ${i + 1}/${scenarios.length}: ${scenario.name}...`;
+  for (let i = 0; i < scenariosToRun.length; i++) {
+    const scenario = scenariosToRun[i];
+    const scenarioProgress =
+      scenariosToRun.length > 1 ? `${i + 1}/${scenariosToRun.length}: ` : "";
+    ocrStatus.textContent = `Analyzing with Scenario ${scenarioProgress}${scenario.name}...`;
 
     // Tạo một canvas tạm để xử lý, không ảnh hưởng đến ảnh gốc của vòng lặp
     const tempCanvas = document.createElement("canvas");

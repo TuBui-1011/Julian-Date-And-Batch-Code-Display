@@ -492,25 +492,49 @@
             <div id="validator-options">
               <div class="row mb-3">
                 <div class="col-md-3">
-                  <label for="areaSelect">1. Select Area:</label>
-                  <select id="areaSelect" class="form-control"></select>
+                  <label for="areaSelect" class="form-label">Area</label>
+                  <select class="form-select" id="areaSelect">
+                    <!-- Options will be populated by JS -->
+                  </select>
                 </div>
                 <div class="col-md-3">
-                  <label for="groupSelect">2. Select Group:</label>
-                  <select id="groupSelect" class="form-control"></select>
+                  <label for="groupSelect" class="form-label">Group</label>
+                  <select id="groupSelect" class="form-select" disabled>
+                    <!-- Options will be populated by JS -->
+                  </select>
                 </div>
                 <div class="col-md-3">
-                  <label for="productSelect">3. Select Line:</label>
-                  <select id="productSelect" class="form-control"></select>
+                  <label for="productSelect" class="form-label"
+                    >Line / Shelf Life</label
+                  >
+                  <select id="productSelect" class="form-select" disabled>
+                    <!-- Options will be populated by JS -->
+                  </select>
                 </div>
                 <div class="col-md-3">
-                  <label for="codeTypeSelect">4. Select Code Type:</label>
-                  <select id="codeTypeSelect" class="form-control">
+                  <label for="codeTypeSelect" class="form-label"
+                    >Code Type</label
+                  >
+                  <select id="codeTypeSelect" class="form-select">
                     <option value="stick">Stick</option>
                     <option value="bag">Bag</option>
                     <option value="carton">Carton</option>
                   </select>
                 </div>
+
+                <!-- === MÃ MỚI CẦN THÊM VÀO ĐÂY === -->
+                <div class="col-md-3">
+                  <label for="printTypeSelect" class="form-label"
+                    >Print Type</label
+                  >
+                  <select class="form-select" id="printTypeSelect">
+                    <option value="auto" selected>Auto-Detect</option>
+                    <option value="solid">Solid Ink (Nét liền)</option>
+                    <option value="laser">Laser/Reflective (Phản quang)</option>
+                    <option value="inkjet">Inkjet (Chấm)</option>
+                  </select>
+                </div>
+                <!-- === KẾT THÚC MÃ MỚI === -->
               </div>
             </div>
 
