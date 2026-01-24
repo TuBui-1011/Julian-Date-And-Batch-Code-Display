@@ -789,6 +789,102 @@ function handleCalcFromExpiry() {
 let videoStream = null; // Biến toàn cục để lưu stream của camera
 
 /**
+ * Kịch bản tiền xử lý 1: Mặc định (cho mã in nét liền).
+ * @param {CanvasRenderingContext2D} context - Context của canvas chứa ảnh.
+ * @param {number} width - Chiều rộng canvas.
+ * @param {number} height - Chiều cao canvas.
+ */
+function preprocessScenario_Default(context, width, height) {
+  const imageData = context.getImageData(0, 0, width, height);
+  const data = imageData.data;
+  // Tăng tương phản nhẹ và chuyển sang ảnh nhị phân (đen/trắng)
+  const contrast = 1.2; // 20%
+  const intercept = 128 * (1 - contrast);
+  for (let i = 0; i < data.length; i += 4) {
+    let r = data[i] * contrast + intercept;
+    let g = data[i + 1] * contrast + intercept;
+    let b = data[i + 2] * contrast + intercept;
+    const gray = r * 0.21 + g * 0.72 + b * 0.07;
+    const color = gray > 128 ? 255 : 0; // Thresholding
+    data[i] = data[i + 1] = data[i + 2] = color;
+  }
+  context.putImageData(imageData, 0, 0);
+}
+
+/**
+ * Kịch bản tiền xử lý 2: Tương phản cao (cho mã in laser/phản quang).
+ * @param {CanvasRenderingContext2D} context - Context của canvas chứa ảnh.
+ * @param {number} width - Chiều rộng canvas.
+ * @param {number} height - Chiều cao canvas.
+ */
+function preprocessScenario_HighContrast(context, width, height) {
+  const imageData = context.getImageData(0, 0, width, height);
+  const data = imageData.data;
+  // Tăng tương phản rất mạnh để khử lóa
+  const contrast = 2.5; // 150%
+  const intercept = 128 * (1 - contrast);
+  for (let i = 0; i < data.length; i += 4) {
+    let r = data[i] * contrast + intercept;
+    let g = data[i + 1] * contrast + intercept;
+    let b = data[i + 2] * contrast + intercept;
+    // Chuyển sang thang xám sau khi tăng tương phản
+    const gray = r * 0.299 + g * 0.587 + b * 0.114;
+    const color = gray > 110 ? 255 : 0; // Giảm ngưỡng threshold một chút
+    data[i] = data[i + 1] = data[i + 2] = color;
+  }
+  context.putImageData(imageData, 0, 0);
+}
+
+/**
+ * Kịch bản tiền xử lý 3: Làm dày nét (cho mã in phun/chấm).
+ * Sử dụng phép toán "dilation" để kết nối các điểm rời rạc.
+ * @param {CanvasRenderingContext2D} context - Context của canvas chứa ảnh.
+ * @param {number} width - Chiều rộng canvas.
+ * @param {number} height - Chiều cao canvas.
+ */
+function preprocessScenario_Dilation(context, width, height) {
+  // Bước 1: Chuyển sang ảnh nhị phân như mặc định
+  preprocessScenario_Default(context, width, height);
+
+  // Bước 2: Áp dụng Dilation để làm dày các pixel đen (nét chữ)
+  const originalImageData = context.getImageData(0, 0, width, height);
+  const originalData = originalImageData.data;
+  const newImageData = context.createImageData(width, height);
+  const newData = newImageData.data;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const index = (y * width + x) * 4;
+      let isBlack = false;
+      // Kiểm tra vùng 3x3 xung quanh pixel hiện tại
+      for (let j = -1; j <= 1; j++) {
+        for (let i = -1; i <= 1; i++) {
+          const newX = x + i;
+          const newY = y + j;
+          if (newX >= 0 && newX < width && newY >= 0 && newY < height) {
+            const neighborIndex = (newY * width + newX) * 4;
+            // Nếu có một pixel đen trong vùng lân cận
+            if (originalData[neighborIndex] === 0) {
+              isBlack = true;
+              break;
+            }
+          }
+        }
+        if (isBlack) break;
+      }
+      // Nếu có lân cận đen, pixel hiện tại cũng trở thành đen
+      if (isBlack) {
+        newData[index] = newData[index + 1] = newData[index + 2] = 0;
+      } else {
+        newData[index] = newData[index + 1] = newData[index + 2] = 255;
+      }
+      newData[index + 3] = 255; // Alpha
+    }
+  }
+  context.putImageData(newImageData, 0, 0);
+}
+
+/**
  * Tăng độ tương phản của ảnh trên canvas.
  * @param {ImageData} imageData - Dữ liệu ảnh từ canvas.
  * @param {number} contrast - Mức độ tương phản (100 là không thay đổi).
@@ -943,7 +1039,7 @@ function stopCamera() {
 }
 
 /**
- * Chụp ảnh từ video, cắt ảnh theo viewfinder, tiền xử lý, nhận dạng và xác thực.
+ * Chụp ảnh từ video, thử nhiều kịch bản xử lý, nhận dạng và xác thực.
  */
 async function captureAndValidate() {
   const video = document.getElementById("videoElement");
@@ -954,7 +1050,7 @@ async function captureAndValidate() {
   ocrStatus.textContent = "Capturing & processing image...";
   validationResult.style.display = "none";
 
-  // --- BƯỚC 1: CHỤP VÀ CẮT ẢNH LẦN 1 (THEO KHUNG NGẮM) ---
+  // --- BƯỚC 1: CHỤP VÀ CẮT ẢNH TỪ VIDEO FEED ---
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d", { willReadFrequently: true });
 
@@ -986,77 +1082,99 @@ async function captureAndValidate() {
     cropHeight,
   );
 
-  // --- BƯỚC 2: TIỀN XỬ LÝ ẢNH NÂNG CAO ---
-  ocrStatus.textContent = "Preprocessing image...";
-  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-  applyContrast(imageData, 150);
-  const data = imageData.data;
-  for (let i = 0; i < data.length; i += 4) {
-    const gray = data[i] * 0.21 + data[i + 1] * 0.72 + data[i + 2] * 0.07;
-    const color = gray > 128 ? 255 : 0;
-    data[i] = data[i + 1] = data[i + 2] = color;
-  }
-  context.putImageData(imageData, 0, 0);
+  // --- BƯỚC 2: THỬ TUẦN TỰ CÁC KỊCH BẢN XỬ LÝ ẢNH ---
+  const scenarios = [
+    { name: "Default (Solid)", process: preprocessScenario_Default },
+    { name: "High Contrast (Laser)", process: preprocessScenario_HighContrast },
+    { name: "Dilation (Inkjet)", process: preprocessScenario_Dilation },
+  ];
 
-  // --- BƯỚC 3: TỰ ĐỘNG CẮT ẢNH LẦN 2 (AUTO-CROPPING) ---
-  ocrStatus.textContent = "Analyzing and auto-cropping text area...";
-  const boundingBox = findTextBoundingBox(
-    context.getImageData(0, 0, canvas.width, canvas.height),
-  );
+  let ocrResultText = "";
 
-  if (!boundingBox || boundingBox.width < 10 || boundingBox.height < 5) {
-    ocrStatus.textContent =
-      "Error: No text detected in the frame. Please try again.";
-    return;
-  }
+  for (let i = 0; i < scenarios.length; i++) {
+    const scenario = scenarios[i];
+    ocrStatus.textContent = `Analyzing with Scenario ${i + 1}/${scenarios.length}: ${scenario.name}...`;
 
-  // Tạo một canvas mới chỉ chứa vùng văn bản đã được xác định
-  const finalCanvas = document.createElement("canvas");
-  const finalContext = finalCanvas.getContext("2d");
-  const padding = 10; // Thêm một chút đệm để tránh cắt vào ký tự
-  finalCanvas.width = boundingBox.width + padding * 2;
-  finalCanvas.height = boundingBox.height + padding * 2;
-
-  // Vẽ vùng ảnh đã cắt siêu chính xác vào canvas cuối cùng
-  finalContext.fillStyle = "white"; // Nền trắng
-  finalContext.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-  finalContext.drawImage(
-    canvas,
-    boundingBox.x,
-    boundingBox.y,
-    boundingBox.width,
-    boundingBox.height,
-    padding,
-    padding,
-    boundingBox.width,
-    boundingBox.height,
-  );
-
-  const processedImageDataUrl = finalCanvas.toDataURL("image/png");
-
-  // --- BƯỚC 4: NHẬN DẠNG KÝ TỰ VỚI CẤU HÌNH TESSERACT TỐI ƯU ---
-  ocrStatus.textContent = "Recognizing text... Please wait.";
-  try {
-    const {
-      data: { text },
-    } = await Tesseract.recognize(processedImageDataUrl, "eng", {
-      logger: (m) => {
-        if (m.status === "recognizing text") {
-          ocrStatus.textContent = `Recognizing... ${Math.round(m.progress * 100)}%`;
-        }
-      },
-      tessedit_char_whitelist: "0123456789./:HSD ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-      tessedit_pageseg_mode: Tesseract.PSM.PSM_SINGLE_LINE,
+    // Tạo một canvas tạm để xử lý, không ảnh hưởng đến ảnh gốc của vòng lặp
+    const tempCanvas = document.createElement("canvas");
+    const tempContext = tempCanvas.getContext("2d", {
+      willReadFrequently: true,
     });
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    tempContext.drawImage(canvas, 0, 0);
 
-    ocrStatus.textContent = `OCR Result: "${text.trim()}"`;
-    // --- BƯỚC 5: XÁC THỰC KẾT QUẢ BẰNG REGEX ---
-    validateOcrResult(text.trim());
-  } catch (error) {
-    console.error("Tesseract Error:", error);
-    ocrStatus.textContent = "Error during text recognition.";
+    // Áp dụng kịch bản tiền xử lý
+    scenario.process(tempContext, tempCanvas.width, tempCanvas.height);
+
+    // Tự động cắt vùng văn bản sau khi tiền xử lý
+    const boundingBox = findTextBoundingBox(
+      tempContext.getImageData(0, 0, tempCanvas.width, tempCanvas.height),
+    );
+
+    if (!boundingBox || boundingBox.width < 10 || boundingBox.height < 5) {
+      console.log(`Scenario ${scenario.name}: No significant text box found.`);
+      continue; // Thử kịch bản tiếp theo
+    }
+
+    // Tạo canvas cuối cùng chỉ chứa vùng văn bản
+    const finalCanvas = document.createElement("canvas");
+    const finalContext = finalCanvas.getContext("2d");
+    const padding = 10;
+    finalCanvas.width = boundingBox.width + padding * 2;
+    finalCanvas.height = boundingBox.height + padding * 2;
+    finalContext.fillStyle = "white";
+    finalContext.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+    finalContext.drawImage(
+      tempCanvas,
+      boundingBox.x,
+      boundingBox.y,
+      boundingBox.width,
+      boundingBox.height,
+      padding,
+      padding,
+      boundingBox.width,
+      boundingBox.height,
+    );
+
+    const processedImageDataUrl = finalCanvas.toDataURL("image/png");
+
+    // --- NHẬN DẠNG KÝ TỰ ---
+    try {
+      const {
+        data: { text },
+      } = await Tesseract.recognize(processedImageDataUrl, "eng", {
+        logger: (m) => {
+          if (m.status === "recognizing text") {
+            ocrStatus.textContent = `Recognizing with ${scenario.name}... ${Math.round(m.progress * 100)}%`;
+          }
+        },
+        tessedit_char_whitelist: "0123456789./:HSD ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        tessedit_pageseg_mode: Tesseract.PSM.PSM_SINGLE_LINE,
+      });
+
+      const cleanedText = text.trim();
+      console.log(`Scenario ${scenario.name} OCR result: "${cleanedText}"`);
+
+      // Điều kiện để chấp nhận kết quả: có ít nhất 3 ký tự và chứa ít nhất 1 chữ số
+      if (cleanedText.length >= 3 && /\d/.test(cleanedText)) {
+        ocrResultText = cleanedText;
+        ocrStatus.textContent = `OCR Result (from ${scenario.name}): "${ocrResultText}"`;
+        break; // Kết quả tốt, thoát khỏi vòng lặp
+      }
+    } catch (error) {
+      console.error(`Tesseract Error on scenario ${scenario.name}:`, error);
+    }
+  }
+
+  // --- BƯỚC 3: XÁC THỰC KẾT QUẢ CUỐI CÙNG ---
+  if (ocrResultText) {
+    validateOcrResult(ocrResultText);
+  } else {
+    ocrStatus.textContent =
+      "Failed to recognize text after trying all scenarios.";
     validationResult.innerHTML =
-      "<strong>Validation Failed:</strong> Could not recognize text.";
+      "<strong>Validation Failed:</strong> Could not recognize text clearly. Please try again.";
     validationResult.className = "alert alert-danger mt-3";
     validationResult.style.display = "block";
   }
