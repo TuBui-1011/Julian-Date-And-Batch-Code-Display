@@ -388,6 +388,32 @@ const products = [
 // =================================================================================
 
 /**
+ * Xác định "ngày sản xuất" dựa trên quy tắc: một ngày sản xuất kéo dài từ 6h sáng hôm nay đến 6h sáng hôm sau.
+ * Thời điểm chuyển giao được đặt là 5:40 sáng.
+ * - Nếu giờ hiện tại < 5:40 sáng, ngày sản xuất được tính là ngày hôm qua.
+ * - Nếu giờ hiện tại >= 5:40 sáng, ngày sản xuất được tính là ngày hôm nay.
+ * @returns {Date} - Đối tượng Date đại diện cho ngày sản xuất hiện tại.
+ */
+function getProductionDate() {
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+
+  // Thời điểm chuyển ngày là 5:40 AM (5 * 60 + 40 = 340 phút)
+  const cutoffInMinutes = 5 * 60 + 40;
+  const nowInMinutes = hours * 60 + minutes;
+
+  if (nowInMinutes < cutoffInMinutes) {
+    // Nếu trước 5:40 sáng, lùi lại 1 ngày
+    const yesterday = new Date();
+    yesterday.setDate(now.getDate() - 1);
+    return yesterday;
+  }
+  // Nếu từ 5:40 sáng trở đi, dùng ngày hiện tại
+  return now;
+}
+
+/**
  * Thêm một số tháng vào một ngày cụ thể.
  * Hàm này xử lý trường hợp ngày cuối tháng, ví dụ: 31/01 + 1 tháng = 28/02 (năm thường).
  * @param {Date} date - Ngày bắt đầu.
@@ -406,23 +432,11 @@ function addMonths(date, months) {
 }
 
 /**
- * Định dạng đối tượng Date thành chuỗi "DD.MM.YYYY".
- * @param {Date} date - Đối tượng Date cần định dạng.
- * @returns {string} - Chuỗi ngày tháng đã định dạng.
- */
-function formatDate(date) {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}.${month}.${year}`;
-}
-
-/**
  * Định dạng đối tượng Date thành chuỗi "DD/MM/YYYY".
  * @param {Date} date - Đối tượng Date cần định dạng.
- * @returns {string} - Chuỗi ngày tháng đã định dạng.
+ * @returns {string} - Chuỗi ngày đã định dạng (ví dụ: "25/01/2026").
  */
-function formatDateWithSlashes(date) {
+function formatDate(date) {
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
@@ -430,9 +444,21 @@ function formatDateWithSlashes(date) {
 }
 
 /**
- * Định dạng đối tượng Date thành chuỗi "DD/MM/YY" (năm 2 chữ số).
+ * Định dạng đối tượng Date thành chuỗi "DD.MM.YYYY".
  * @param {Date} date - Đối tượng Date cần định dạng.
- * @returns {string} - Chuỗi ngày tháng đã định dạng.
+ * @returns {string} - Chuỗi ngày đã định dạng (ví dụ: "25.01.2026").
+ */
+function formatDateWithDots(date) {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}.${month}.${year}`;
+}
+
+/**
+ * Định dạng ngày theo kiểu DD/MM/YY (năm 2 chữ số).
+ * @param {Date} date - Đối tượng Date cần định dạng.
+ * @returns {string} - Chuỗi ngày đã định dạng.
  */
 function formatDateShortYear(date) {
   const day = String(date.getDate()).padStart(2, "0");
@@ -471,14 +497,28 @@ function getJulianDay(date) {
 /**
  * Tạo chuỗi Batch Code theo định dạng: YJJJFS (Y: năm, JJJ: ngày Julian, F: mã nhà máy, S: hậu tố).
  * @param {Date} date - Ngày sản xuất.
- * @param {string} suffix - Ký tự cuối của batch code.
- * @returns {string} - Chuỗi Batch Code hoàn chỉnh.
+ * @param {string} suffix - Ký tự hậu tố của dây chuyền.
+ * @returns {string} - Chuỗi Batch Code đã định dạng (ví dụ: "60252131_X").
  */
 function formatBatchCode(date, suffix) {
-  const year = String(date.getFullYear()).slice(-1);
+  const year = String(date.getFullYear()).slice(-1); // Lấy số cuối của năm
   const julianDay = String(getJulianDay(date)).padStart(3, "0");
-  const factoryCode = "2131"; // Mã nhà máy cố định
-  return `${year}${julianDay}${factoryCode}${suffix}`;
+  const plantCode = "2131"; // Mã nhà máy
+  return `${year}${julianDay}${plantCode}${suffix}`;
+}
+
+/**
+ * Định dạng HSD tùy chỉnh cho các sản phẩm không phải PSC.
+ * @param {Date} expiryDate - Ngày hết hạn.
+ * @param {Date} productionDate - Ngày sản xuất.
+ * @param {string} suffix - Ký tự hậu tố của sản phẩm (ví dụ: 'L').
+ * @returns {string} - Chuỗi HSD đã định dạng cho bao bì không phải PSC.
+ */
+function formatCustomExpiryNonPSC(expiryDate, productionDate, suffix) {
+  const day = String(expiryDate.getDate()).padStart(2, "0");
+  const month = String(expiryDate.getMonth() + 1).padStart(2, "0");
+  const year = String(expiryDate.getFullYear()).slice(-2);
+  return `${day}/${month}/${year} ${suffix}`;
 }
 
 // =================================================================================
@@ -540,31 +580,39 @@ function parseDateString(dateString) {
  */
 function updateDateTime() {
   const now = new Date();
+  // Ngày Julian vẫn tính theo ngày lịch (thay đổi sau 0h)
   const julianDay = getJulianDay(now);
 
-  // Cập nhật ngày giờ hiện tại
+  // Cập nhật ngày giờ hiện tại với định dạng DD/MM/YYYY
   document.getElementById("currentDateTime").textContent =
-    now.toLocaleString("vi-VN");
-  // Cập nhật ngày Julian
-  document.getElementById("julianDaily").textContent = julianDay;
+    `${formatDate(now)} ${now.toLocaleTimeString("en-GB")}`;
+
+  // Cập nhật ngày Julian với định dạng 3 chữ số
+  document.getElementById("julianDaily").textContent = String(
+    julianDay,
+  ).padStart(3, "0");
   // Cập nhật batch code ví dụ (dùng hậu tố 'X' làm ví dụ)
+  // Batch code ví dụ cũng cần theo ngày sản xuất
+  const productionDateForExample = getProductionDate();
   document.getElementById("currentBatchCode").textContent = formatBatchCode(
-    now,
-    "X",
+    productionDateForExample,
+    "", // Thay "X" bằng chuỗi rỗng để chỉ hiển thị dấu gạch dưới
   );
 }
 
 /**
  * Tính toán và hiển thị tất cả các mã lô và ngày hết hạn cho các sản phẩm.
- * Hàm này sẽ được gọi khi trang tải và vào lúc nửa đêm.
+ * Hàm này sẽ được gọi khi trang tải và vào lúc 5:40 sáng hàng ngày.
  */
 function calculateAndDisplayAll() {
-  const today = new Date();
+  // Sử dụng getProductionDate() để xác định ngày cho tất cả các tính toán batch/HSD
+  const productionDate = getProductionDate();
+  const todayForShelfLife = new Date(); // Bảng HSD nhanh vẫn có thể tính theo ngày hiện tại
 
   // Cập nhật bảng HSD nhanh
   const shelfLives = [9, 10, 12, 15, 18, 24];
   shelfLives.forEach((sl) => {
-    const expiryDate = addMonths(today, sl);
+    const expiryDate = addMonths(todayForShelfLife, sl);
     const element = document.getElementById(`expiry-${sl}`);
     if (element) {
       element.textContent = formatDate(expiryDate);
@@ -573,29 +621,33 @@ function calculateAndDisplayAll() {
 
   // Lặp qua mảng sản phẩm và cập nhật thông tin cho từng dòng
   products.forEach((product) => {
-    const expiryDate = addMonths(today, product.shelfLife);
-    const batchCode = formatBatchCode(today, product.batchSuffix);
+    const expiryDate = addMonths(productionDate, product.shelfLife);
+    const batchCode = formatBatchCode(productionDate, product.batchSuffix);
 
     // Cập nhật Batch Code
     const batchEl = document.getElementById(product.batchId);
-    if (batchEl) batchEl.textContent = batchCode;
+    if (batchEl) {
+      batchEl.textContent = batchCode;
+      batchEl.onclick = () => copyToClipboard(batchEl); // Thêm lại sự kiện click
+      batchEl.title = "Click to copy"; // Thêm lại tooltip
+    }
 
     // Cập nhật HSD Stick
     const expiryEl = document.getElementById(product.expiryId);
     if (expiryEl) {
       // Áp dụng định dạng đặc biệt cho Stick của nhóm PSC
       if (product.area === "Filling" && product.group === "PSC") {
-        const stickFormat = `${formatDateWithSlashes(
-          expiryDate,
-        )}<br>${batchCode}`;
+        const stickFormat = `${formatDate(expiryDate)}<br>${batchCode}`;
         expiryEl.innerHTML = stickFormat; // Dùng innerHTML để thẻ <br> hoạt động
       } else {
         expiryEl.textContent = formatCustomExpiry(
           expiryDate,
-          today,
+          productionDate, // Sử dụng productionDate ở đây
           product.batchSuffix,
         );
       }
+      expiryEl.onclick = () => copyToClipboard(expiryEl); // Thêm lại sự kiện click
+      expiryEl.title = "Click to copy"; // Thêm lại tooltip
     }
 
     // Chỉ cập nhật Bag và Carton cho khu vực Packing
@@ -603,18 +655,24 @@ function calculateAndDisplayAll() {
       // Cập nhật HSD Bag (tùy nhóm sản phẩm)
       let bagFormat;
       if (product.group === "PSC") {
-        const time = today.toTimeString().substring(0, 5); // Lấy HH:MM
-        bagFormat = `${formatDateWithSlashes(
-          expiryDate,
-        )}<br>${time} ${batchCode}`;
-      } else if (product.group === "2IN1") {
-        bagFormat = formatDateWithSlashes(expiryDate);
+        const time = productionDate.toTimeString().substring(0, 5); // Lấy HH:MM
+        bagFormat = `${formatDate(expiryDate)}<br>${time} ${batchCode}`;
+      } else if (product.group === "2IN1" || product.group === "3IN1") {
+        // Định dạng mới: HSD xuống hàng rồi đến Batch Code
+        bagFormat = `${formatDateWithDots(expiryDate)}<br>${batchCode}`;
+      } else if (product.group === "MILO") {
+        // Giữ nguyên định dạng cũ cho MILO
+        bagFormat = formatDateWithDots(expiryDate);
       } else {
         bagFormat = formatDate(expiryDate);
       }
 
       const bagEl = document.getElementById(product.expiryBagId);
-      if (bagEl) bagEl.innerHTML = bagFormat; // Dùng innerHTML để thẻ <br> hoạt động
+      if (bagEl) {
+        bagEl.innerHTML = bagFormat; // Dùng innerHTML để thẻ <br> hoạt động
+        bagEl.onclick = () => copyToClipboard(bagEl); // Thêm lại sự kiện click
+        bagEl.title = "Click to copy"; // Thêm lại tooltip
+      }
 
       // Cập nhật HSD Carton (tùy nhóm sản phẩm)
       const cartonFormat =
@@ -622,27 +680,41 @@ function calculateAndDisplayAll() {
           ? `${batchCode} ${formatDate(expiryDate)} 00:00`
           : `${batchCode} HSD ${formatDateShortYear(expiryDate)}`;
       const cartonEl = document.getElementById(product.expiryCartonId);
-      if (cartonEl) cartonEl.textContent = cartonFormat;
+      if (cartonEl) {
+        cartonEl.textContent = cartonFormat;
+        cartonEl.onclick = () => copyToClipboard(cartonEl); // Thêm lại sự kiện click
+        cartonEl.title = "Click to copy"; // Thêm lại tooltip
+      }
     }
   });
 }
 
 /**
- * Thiết lập bộ đếm thời gian để tự động cập nhật dữ liệu vào lúc nửa đêm.
+ * Thiết lập bộ đếm thời gian để tự động cập nhật dữ liệu vào lúc 5:40 sáng hàng ngày.
  */
 function scheduleDailyUpdate() {
   const now = new Date();
-  const tomorrow = new Date(
+  const nextRun = new Date(
     now.getFullYear(),
     now.getMonth(),
-    now.getDate() + 1,
+    now.getDate(),
+    5,
+    40,
+    0,
+    0,
   );
-  const msUntilMidnight = tomorrow - now;
+
+  if (now > nextRun) {
+    // Nếu bây giờ đã qua 5:40 sáng, đặt lịch cho ngày mai
+    nextRun.setDate(nextRun.getDate() + 1);
+  }
+
+  const msUntilNextRun = nextRun - now;
 
   setTimeout(() => {
-    calculateAndDisplayAll(); // Chạy lần đầu vào nửa đêm
+    calculateAndDisplayAll(); // Chạy lần đầu vào 5:40 sáng
     setInterval(calculateAndDisplayAll, 24 * 60 * 60 * 1000); // Lặp lại mỗi 24 giờ
-  }, msUntilMidnight);
+  }, msUntilNextRun);
 }
 
 // =================================================================================
@@ -724,28 +796,33 @@ document.addEventListener("DOMContentLoaded", function () {
 /**
  * Xử lý sự kiện khi người dùng nhấn nút "Calculate" từ Batch Code.
  */
+// Hàm xử lý khi nhấn nút "Calculate" trong phần Batch Code
 function handleCalcFromBatch() {
-  const batchInput = document.getElementById("batchInput").value.trim();
-  const resultDiv = document.getElementById("calcResult");
+  const batchInput = document.getElementById("batchInput").value.trim(); // biến lưu giá trị nhập vào
+  const resultDiv = document.getElementById("calcResult"); // biến lưu phần hiển thị kết quả
 
   // Regex để trích xuất năm (1 chữ số) và ngày Julian (3 chữ số)
-  const match = batchInput.match(/^(\d)(\d{3})/);
+  const match = batchInput.match(/^(\d)(\d{3})/); // biến lưu kết quả regex
 
+  // Điều kiện kiểm tra kết quả regex
   if (match) {
-    const yearDigit = parseInt(match[1], 10);
-    const julianDay = parseInt(match[2], 10);
+    const yearDigit = parseInt(match[1], 10); // Lấy chữ số năm
+    const julianDay = parseInt(match[2], 10); // Lấy ngày Julian
 
     // Xác định thế kỷ (giả định năm 202x)
-    const currentYear = new Date().getFullYear();
-    const currentCentury = Math.floor(currentYear / 10) * 10;
-    const productionYear = currentCentury + yearDigit;
+    const currentYear = new Date().getFullYear(); // Lấy năm hiện tại
+    const currentCentury = Math.floor(currentYear / 10) * 10; // Lấy thế kỷ hiện tại
+    const productionYear = currentCentury + yearDigit; // Tính năm sản xuất đầy đủ
 
-    const productionDate = julianToDate(productionYear, julianDay);
-    resultDiv.innerHTML = `<strong>Production Date:</strong> ${formatDateWithSlashes(
+    // Tạo ngày sản xuất từ năm và ngày Julian
+
+    const productionDate = julianToDate(productionYear, julianDay); // Tính ngày sản xuất từ năm và ngày Julian
+    resultDiv.innerHTML = `<strong>Production Date:</strong> ${formatDate(
       productionDate,
-    )}`;
+    )}`; // Hiển thị kết quả ngày sản xuất nếu hợp lệ
     resultDiv.className = "alert alert-success mt-4";
     resultDiv.style.display = "block";
+    // Nếu không hợp lệ, hiển thị thông báo lỗi
   } else {
     resultDiv.innerHTML =
       "<strong>Invalid Batch Code format.</strong> Expected format: YJJJ...";
@@ -769,7 +846,7 @@ function handleCalcFromExpiry() {
 
   if (expiryDate) {
     const productionDate = subtractMonths(expiryDate, shelfLife);
-    resultDiv.innerHTML = `<strong>Calculated Production Date:</strong> ${formatDateWithSlashes(
+    resultDiv.innerHTML = `<strong>Calculated Production Date:</strong> ${formatDate(
       productionDate,
     )}`;
     resultDiv.className = "alert alert-success mt-4";
@@ -785,8 +862,18 @@ function handleCalcFromExpiry() {
 // =================================================================================
 // KHU VỰC VALIDATE BẰNG CAMERA (CAMERA VALIDATION)
 // =================================================================================
+// Flow: 1. Chọn Area -> Group -> Product
+//       2. Bấm "Start Camera" để kích hoạt camera
+//       3. Bấm "Capture & Validate" để chụp ảnh và kiểm tra mã in
+//       4. Hiển thị kết quả dưới dạng Overlay trên video
+//       5. Bấm "Stop Camera" để tắt camera
+// Nguyên tắc tiền xử lý ảnh:
+// - Mã in nét liền: Tiền xử lý mặc định (tăng tương phản nhẹ, chuyển ảnh sang nhị phân).
+// - Mã in laser/phản quang: Tăng tương phản mạnh để khử lóa.
+// - Mã in phun/chấm: Sử dụng phép toán "dilation" để làm dày nét chữ.
 
-let videoStream = null; // Biến toàn cục để lưu stream của camera
+
+let videoStream = null; // Biến toàn cục để lưu stream của camera để dừng sau này
 
 /**
  * Kịch bản tiền xử lý 1: Mặc định (cho mã in nét liền).
@@ -847,6 +934,9 @@ function preprocessScenario_Dilation(context, width, height) {
   preprocessScenario_Default(context, width, height);
 
   // Bước 2: Áp dụng Dilation để làm dày các pixel đen (nét chữ)
+      // Dilation là một phép toán hình thái học giúp mở rộng các vùng sáng (ở đây là pixel đen)
+      // trong ảnh nhị phân. Chúng ta sẽ kiểm tra vùng 3x3 xung quanh mỗi pixel.
+      // Nếu có bất kỳ pixel nào trong vùng đó là đen, pixel hiện tại cũng sẽ trở thành đen.
   const originalImageData = context.getImageData(0, 0, width, height);
   const originalData = originalImageData.data;
   const newImageData = context.createImageData(width, height);
